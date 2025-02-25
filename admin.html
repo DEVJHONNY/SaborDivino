@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Sabor Divino</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="config.js"></script>
+    <script src="produtos.js"></script>
+    <script src="sistema/relatorios.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div id="loginForm">
+            <h2>🔐 Área Administrativa</h2>
+            <div class="form-group">
+                <label>Senha:</label>
+                <input type="password" id="senha" placeholder="Digite a senha">
+                <button onclick="login()">Entrar</button>
+            </div>
+        </div>
+
+        <div id="adminPanel" style="display: none;">
+            <nav class="admin-nav">
+                <button onclick="mostrarSecao('estoque')" class="nav-btn">Gerenciar Estoque</button>
+                <button onclick="mostrarSecao('produtos')" class="nav-btn">Gerenciar Produtos</button>
+                <button onclick="mostrarSecao('senha')" class="nav-btn">Alterar Senha</button>
+                <button onclick="mostrarSecao('relatorios')" class="nav-btn">📊 Relatórios</button>
+            </nav>
+
+            <div id="estoqueSecao" class="secao-admin">
+                <h2>📦 Gerenciar Estoque</h2>
+                <div id="estoqueList"></div>
+                <button onclick="salvarEstoque()" class="enviar">Salvar Alterações</button>
+            </div>
+
+            <div id="produtosSecao" class="secao-admin" style="display: none;">
+                <h2>🛍️ Gerenciar Produtos</h2>
+                <div class="form-group">
+                    <label>Categoria:</label>
+                    <select id="categoriaProduto">
+                        <option value="trufas">Trufas</option>
+                        <option value="mousses">Mousses</option>
+                        <option value="empadas">Empadas</option>
+                    </select>
+                </div>
+                <div id="listaProdutos"></div>
+                <button onclick="adicionarNovoProduto()" class="add-btn">+ Adicionar Novo Produto</button>
+                <div class="button-group">
+                    <button onclick="salvarProdutos()" class="enviar">Salvar Alterações</button>
+                    <button onclick="confirmarReset()" class="reset-btn">Resetar para Padrão</button>
+                </div>
+            </div>
+
+            <div id="senhaSecao" class="secao-admin" style="display: none;">
+                <h2>🔑 Alterar Senha</h2>
+                <div class="form-group">
+                    <label>Senha Atual:</label>
+                    <input type="password" id="senhaAtual">
+                </div>
+                <div class="form-group">
+                    <label>Nova Senha:</label>
+                    <input type="password" id="novaSenha">
+                </div>
+                <div class="form-group">
+                    <label>Confirme a Nova Senha:</label>
+                    <input type="password" id="confirmaSenha">
+                </div>
+                <button onclick="alterarSenha()" class="enviar">Salvar Nova Senha</button>
+            </div>
+
+            <div id="relatoriosSecao" class="secao-admin" style="display: none;">
+                <h2>📊 Relatórios</h2>
+                
+                <div class="relatorios-tabs">
+                    <button onclick="carregarRelatorio('vendas', this)" class="tab-btn active">Registro de Vendas</button>
+                    <button onclick="carregarRelatorio('produtos', this)" class="tab-btn">Vendas por Produto</button>
+                    <button onclick="carregarRelatorio('periodos', this)" class="tab-btn">Vendas por Período</button>
+                    <button onclick="carregarRelatorio('clientes', this)" class="tab-btn">Análise de Clientes</button>
+                </div>
+            
+                <div class="relatorio-controles">
+                    <select id="filtroStatus">
+                        <option value="todos">Todos os Status</option>
+                        <option value="pendente">Pendentes</option>
+                        <option value="concluido">Concluídos</option>
+                        <option value="cancelado">Cancelados</option>
+                    </select>
+                    <select id="filtroPeriodo">
+                        <option value="hoje">Hoje</option>
+                        <option value="semana">Esta Semana</option>
+                        <option value="mes">Este Mês</option>
+                        <option value="todos">Todo Período</option>
+                    </select>
+                    <button onclick="exportarRelatorioAtual()" class="export-btn">📥 Exportar CSV</button>
+                </div>
+            
+                <div id="relatorioContent" class="relatorio-container">
+                    <!-- O conteúdo será preenchido dinamicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tentativasLogin = 0;
+        let tempoBloqueioPag = 0;
+        
+        async function login() {
+            const senha = document.getElementById('senha').value.trim(); // Remover espaços
+            
+            // Verificar bloqueio
+            if (tempoBloqueioPag > Date.now()) {
+                const minutosRestantes = Math.ceil((tempoBloqueioPag - Date.now()) / 60000);
+                alert(`Muitas tentativas incorretas. Tente novamente em ${minutosRestantes} minutos.`);
+                return;
+            }
+
+            try {
+                const senhaHash = await criarHash(senha);
+                console.log('Hash gerado:', senhaHash);
+                console.log('Hash esperado:', CONFIG.SENHA_HASH);
+                console.log('São iguais?', senhaHash === CONFIG.SENHA_HASH);
+                
+                // Comparação direta dos hashes
+                if (senhaHash.toLowerCase() === CONFIG.SENHA_HASH.toLowerCase()) {
+                    console.log('Login bem sucedido!');
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.getElementById('adminPanel').style.display = 'block';
+                    carregarEstoque();
+                    carregarProdutos();
+                    tentativasLogin = 0;
+                    return;
+                }
+                
+                // Se chegou aqui, a senha está incorreta
+                tentativasLogin++;
+                console.log('Senha incorreta');
+                
+                if (tentativasLogin >= CONFIG.MAX_TENTATIVAS) {
+                    tempoBloqueioPag = Date.now() + (CONFIG.TEMPO_BLOQUEIO * 60 * 1000);
+                    alert(`Muitas tentativas incorretas. Sistema bloqueado por ${CONFIG.TEMPO_BLOQUEIO} minutos.`);
+                } else {
+                    alert(`Senha incorreta! Tentativas restantes: ${CONFIG.MAX_TENTATIVAS - tentativasLogin}`);
+                }
+            } catch (error) {
+                console.error('Erro ao processar login:', error);
+                alert('Erro ao processar login. Tente novamente.');
+            }
+        }
+
+        function carregarEstoque() {
+            const estoqueList = document.getElementById('estoqueList');
+            estoqueList.innerHTML = '';
+
+            Object.entries(produtos).forEach(([categoria, items]) => {
+                const categoriaDiv = document.createElement('div');
+                categoriaDiv.innerHTML = `<h3>${categoria.toUpperCase()}</h3>`;
+
+                items.forEach(produto => {
+                    categoriaDiv.innerHTML += `
+                        <div class="form-group">
+                            <label>${produto.nome}</label>
+                            <input type="number" 
+                                   id="estoque-${produto.id}" 
+                                   value="${produto.estoque}" 
+                                   min="0">
+                        </div>
+                    `;
+                });
+
+                estoqueList.appendChild(categoriaDiv);
+            });
+        }
+
+        function salvarEstoque() {
+            Object.entries(produtos).forEach(([categoria, items]) => {
+                items.forEach(produto => {
+                    const novoEstoque = parseInt(document.getElementById(`estoque-${produto.id}`).value);
+                    produto.estoque = novoEstoque;
+                });
+            });
+
+            localStorage.setItem('estoqueProdutos', JSON.stringify(produtos));
+            alert('Estoque atualizado com sucesso!');
+        }
+
+        function mostrarSecao(secao) {
+            document.querySelectorAll('.secao-admin').forEach(el => el.style.display = 'none');
+            document.getElementById(secao + 'Secao').style.display = 'block';
+            
+            // Se for a seção de relatórios, carregar dados iniciais
+            if (secao === 'relatorios') {
+                const btnVendas = document.querySelector('.tab-btn');
+                if (btnVendas) {
+                    carregarRelatorio('vendas', btnVendas);
+                }
+            }
+        }
+
+        // Carregar estoque do localStorage ao iniciar
+        const estoqueLocal = localStorage.getItem('estoqueProdutos');
+        if (estoqueLocal) {
+            Object.assign(produtos, JSON.parse(estoqueLocal));
+        }
+
+        let relatorioAtual = null;
+        let tipoRelatorioAtual = 'vendas';
+
+        async function carregarRelatorio(tipo, elemento) {
+            try {
+                tipoRelatorioAtual = tipo;
+                const relatorio = await RelatoriosController.gerarRelatorioCompleto();
+                relatorioAtual = relatorio[tipo];
+                
+                const container = document.getElementById('relatorioContent');
+                container.innerHTML = '';
+            
+                switch(tipo) {
+                    case 'vendas':
+                        renderizarTabelaVendas(relatorio.vendas);
+                        break;
+                    case 'produtos':
+                        renderizarTabelaProdutos(relatorio.produtos);
+                        break;
+                    case 'periodos':
+                        renderizarTabelaPeriodos(relatorio.periodos);
+                        break;
+                    case 'clientes':
+                        renderizarTabelaClientes(relatorio.clientes);
+                        break;
+                }
+            
+                // Atualizar botões ativos
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                if (elemento) {
+                    elemento.classList.add('active');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar relatório:', error);
+                alert('Erro ao carregar relatório. Por favor, tente novamente.');
+            }
+        }
+
+        function renderizarTabelaVendas(vendas) {
+            const table = document.createElement('table');
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Cliente</th>
+                        <th>Produtos</th>
+                        <th>Valor Total</th>
+                        <th>Forma Pagamento</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${vendas.map(venda => {
+                        // Formatar lista de produtos corretamente
+                        const produtosFormatados = Array.isArray(venda.produtos) ? 
+                            venda.produtos.map(p => `${p.quantidade}x ${p.nome} (R$ ${(p.quantidade * p.preco).toFixed(2)})`).join('<br>') : 
+                            'Sem produtos';
+
+                        return `
+                            <tr>
+                                <td>${venda.data}</td>
+                                <td>${venda.cliente}</td>
+                                <td>${produtosFormatados}</td>
+                                <td>R$ ${typeof venda.valorTotal === 'number' ? 
+                                        venda.valorTotal.toFixed(2).replace('.', ',') : 
+                                        Number(venda.valorTotal).toFixed(2).replace('.', ',')}</td>
+                                <td>${venda.formaPagamento.toUpperCase()}</td>
+                                <td>${venda.status.toUpperCase()}</td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            `;
+            document.getElementById('relatorioContent').appendChild(table);
+        }
+
+        function renderizarTabelaProdutos(produtos) {
+            const table = document.createElement('table');
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Quantidade Vendida</th>
+                        <th>Valor Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${produtos.map(produto => `
+                        <tr>
+                            <td>${produto.produto}</td>
+                            <td>${produto.quantidadeVendida}</td>
+                            <td>R$ ${produto.valorTotal.replace('.', ',')}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+            document.getElementById('relatorioContent').appendChild(table);
+        }
+
+        function renderizarTabelaPeriodos(periodos) {
+            const table = document.createElement('table');
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Período</th>
+                        <th>Quantidade de Vendas</th>
+                        <th>Valor Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${periodos.map(periodo => `
+                        <tr>
+                            <td>${periodo.periodo}</td>
+                            <td>${periodo.quantidadeVendas}</td>
+                            <td>R$ ${periodo.valorTotal.replace('.', ',')}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+            document.getElementById('relatorioContent').appendChild(table);
+        }
+
+        function renderizarTabelaClientes(clientes) {
+            const table = document.createElement('table');
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Total de Compras</th>
+                        <th>Valor Total</th>
+                        <th>Produto Favorito</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${clientes.map(cliente => `
+                        <tr>
+                            <td>${cliente.cliente}</td>
+                            <td>${cliente.totalCompras}</td>
+                            <td>R$ ${cliente.valorTotal.replace('.', ',')}</td>
+                            <td>${cliente.produtoFavorito}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+            document.getElementById('relatorioContent').appendChild(table);
+        }
+
+        function exportarRelatorioAtual() {
+            if (!relatorioAtual) return;
+            RelatoriosController.exportarCSV(relatorioAtual, tipoRelatorioAtual);
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            const estoqueLocal = localStorage.getItem('estoqueProdutos');
+            if (estoqueLocal) {
+                Object.assign(produtos, JSON.parse(estoqueLocal));
+            }
+            
+            // Adicionar event listeners para filtros
+            document.getElementById('filtroStatus')?.addEventListener('change', () => {
+                carregarRelatorio(tipoRelatorioAtual, document.querySelector('.tab-btn.active'));
+            });
+            
+            document.getElementById('filtroPeriodo')?.addEventListener('change', () => {
+                carregarRelatorio(tipoRelatorioAtual, document.querySelector('.tab-btn.active'));
+            });
+        });
+    </script>
+</body>
+</html>
