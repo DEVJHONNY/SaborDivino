@@ -153,12 +153,24 @@ const RelatoriosController = {
         dados.forEach(row => {
             table += '<tr>';
             headers.forEach(header => {
-                const valor = row[header] ?? '';
-                table += `<td style="padding: 8px;">${
-                    typeof valor === 'number' ? 
-                        valor.toFixed(2).replace('.', ',') : 
-                        valor
-                }</td>`;
+                let valor = row[header];
+                
+                // Formatação especial para produtos
+                if (header === 'produtos' && Array.isArray(valor)) {
+                    valor = valor.map(p => 
+                        `${p.quantidade}x ${p.nome} (R$ ${(p.quantidade * p.preco).toFixed(2)})`
+                    ).join(', ');
+                }
+                // Formatação para valores numéricos
+                else if (typeof valor === 'number') {
+                    valor = valor.toFixed(2).replace('.', ',');
+                }
+                // Formatação para outros casos
+                else if (valor === undefined || valor === null) {
+                    valor = '';
+                }
+                
+                table += `<td style="padding: 8px;">${valor}</td>`;
             });
             table += '</tr>';
         });
