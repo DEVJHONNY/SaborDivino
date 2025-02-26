@@ -2,11 +2,13 @@ const BackupSystem = {
     async criarBackup() {
         try {
             const backup = {
-                timestamp: new Date().toISOString(),
+                data: new Date().toISOString(),
                 versao: CONFIG.VERSAO_CATALOGO,
                 produtos: JSON.parse(localStorage.getItem('estoqueProdutos') || '{}'),
-                tickets: JSON.parse(localStorage.getItem('historico_tickets') || '[]'),
-                clientes: JSON.parse(localStorage.getItem('historico_clientes') || '[]')
+                historico: {
+                    tickets: JSON.parse(localStorage.getItem('historico_tickets') || '[]'),
+                    clientes: JSON.parse(localStorage.getItem('historico_clientes') || '[]')
+                }
             };
 
             localStorage.setItem('ultimo_backup', JSON.stringify(backup));
@@ -24,8 +26,8 @@ const BackupSystem = {
             if (!backup) throw new Error('Nenhum backup encontrado');
 
             localStorage.setItem('estoqueProdutos', JSON.stringify(backup.produtos));
-            localStorage.setItem('historico_tickets', JSON.stringify(backup.tickets));
-            localStorage.setItem('historico_clientes', JSON.stringify(backup.clientes));
+            localStorage.setItem('historico_tickets', JSON.stringify(backup.historico.tickets));
+            localStorage.setItem('historico_clientes', JSON.stringify(backup.historico.clientes));
             localStorage.setItem('versaoCatalogo', backup.versao);
 
             console.log('Backup restaurado com sucesso');
