@@ -14,10 +14,20 @@ const CONFIG = {
     DEBUG: true, // Adicionar modo debug para ajudar na identificação de erros
 
     // Adicionar versão do catálogo
-    VERSAO_CATALOGO: "2024.02.26.3", // Formato: YYYY.MM.DD.versao
+    VERSAO_CATALOGO: "2024.02.26.4", // Formato: YYYY.MM.DD.versao
 
     // Força sincronização em todos os dispositivos
-    FORCAR_SINCRONIZACAO: true
+    FORCAR_SINCRONIZACAO: true,
+
+    // URL do arquivo raw do GitHub com o catálogo atual
+    CATALOGO_URL: 'https://raw.githubusercontent.com/DEVJHONNY/sabor-divino/main/catalogo.json',
+    
+    // Configurações de sincronização
+    SYNC: {
+        CHECK_INTERVAL: 5 * 60 * 1000, // 5 minutos
+        LAST_UPDATE: null,
+        FORCE_UPDATE: true
+    }
 };
 
 // Função para criar hash (SHA-256)
