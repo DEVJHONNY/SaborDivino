@@ -33,8 +33,29 @@ const TesteVendas = {
         // Testes de Validação
         console.log('\n✔️ Testando Validações...');
         await executarTeste('Validação de quantidade', () => {
-            const quantidadeValida = InterfaceController.validarQuantidade({ value: '5' });
-            if (quantidadeValida === false) {
+            // Criar elemento mock para teste
+            const mockItemPedido = document.createElement('div');
+            mockItemPedido.className = 'item-pedido';
+            
+            const mockProdutoSelect = document.createElement('select');
+            mockProdutoSelect.className = 'produto';
+            const mockOption = document.createElement('option');
+            mockOption.value = 'trufas-1';
+            mockOption.dataset.estoque = '10';
+            mockProdutoSelect.appendChild(mockOption);
+            
+            const mockQuantidadeInput = document.createElement('input');
+            mockQuantidadeInput.type = 'number';
+            mockQuantidadeInput.value = '5';
+            mockQuantidadeInput.className = 'quantidade';
+            
+            mockItemPedido.appendChild(mockProdutoSelect);
+            mockItemPedido.appendChild(mockQuantidadeInput);
+            
+            // Simular validação
+            const resultado = InterfaceController.validarQuantidade(mockQuantidadeInput);
+            
+            if (resultado === false) {
                 throw new Error('Falha na validação de quantidade válida');
             }
         });
