@@ -77,21 +77,46 @@ const PedidoController = {
     coletarItens() {
         const itens = [];
         document.querySelectorAll('.item-pedido').forEach(item => {
-            const produto = item.querySelector('.produto').value;
-            const quantidade = parseInt(item.querySelector('.quantidade').value);
-            if (produto && quantidade > 0) {
-                const [categoria, id] = produto.split('-');
-                const produtoInfo = produtos[categoria].find(p => p.id === parseInt(id));
-                if (produtoInfo) {
-                    itens.push({
-                        id: produtoInfo.id,
-                        nome: produtoInfo.nome,
-                        preco: produtoInfo.preco,
-                        quantidade: quantidade
-                    });
-                }
+            const categoriaSelect = item.querySelector('.categoria');
+            const produtoSelect = item.querySelector('.produto');
+            const quantidadeInput = item.querySelector('.quantidade');
+            
+            if (!categoriaSelect || !produtoSelect || !quantidadeInput) {
+                console.warn('Elementos do item não encontrados');
+                return;
+            }
+
+            const categoria = categoriaSelect.value;
+            const produtoId = produtoSelect.value;
+            const quantidade = parseInt(quantidadeInput.value);
+
+            if (!categoria || !produtoId || !quantidade) {
+                console.warn('Dados do item incompletos');
+                return;
+            }
+
+            if (!produtos[categoria]) {
+                console.error(`Categoria ${categoria} não encontrada`);
+                return;
+            }
+
+            const produtoInfo = produtos[categoria].find(p => p.id === parseInt(produtoId));
+            if (produtoInfo) {
+                itens.push({
+                    id: produtoInfo.id,
+                    nome: produtoInfo.nome,
+                    preco: produtoInfo.preco,
+                    quantidade: quantidade
+                });
+            } else {
+                console.warn(`Produto ${produtoId} não encontrado na categoria ${categoria}`);
             }
         });
+
+        if (itens.length === 0) {
+            throw new Error('Selecione pelo menos um produto para continuar');
+        }
+
         return itens;
     },
 
