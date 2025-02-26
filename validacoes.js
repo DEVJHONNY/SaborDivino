@@ -34,6 +34,30 @@ window.addEventListener('error', function(e) {
 
 // Validation functions
 const Validacoes = {
+    validarFormulario() {
+        const nome = document.getElementById('nome').value.trim();
+        const metodoPagamento = document.querySelector('input[name="metodo-pagamento"]:checked');
+
+        if (!nome) {
+            this.mostrarErro('Por favor, preencha seu nome');
+            return false;
+        }
+
+        if (!metodoPagamento) {
+            this.mostrarErro('Por favor, selecione um método de pagamento');
+            return false;
+        }
+
+        // Validar telefone apenas se foi preenchido
+        const telefone = document.getElementById('telefone').value.trim();
+        if (telefone && !this.validarTelefone(telefone)) {
+            this.mostrarErro('Formato de telefone inválido');
+            return false;
+        }
+
+        return true;
+    },
+
     validarNome(nome) {
         return nome.trim().length >= 3;
     },
@@ -69,8 +93,9 @@ const Validacoes = {
     },
 
     validarTelefone(telefone) {
-        const telefoneNumeros = telefone.replace(/\D/g, '');
-        return telefoneNumeros.length === 11;
+        // Validar apenas se o campo foi preenchido
+        if (!telefone) return true;
+        return /^[0-9]{10,11}$/.test(telefone);
     },
 
     validarEndereco(endereco) {
