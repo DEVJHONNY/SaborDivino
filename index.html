@@ -108,17 +108,18 @@
             </div>
 
             <div class="form-group">
-                <label for="telefone">WhatsApp:</label>
-                <input type="tel" id="telefone" required pattern="[0-9]{11}" 
+                <label for="telefone">WhatsApp: (opcional)</label>
+                <input type="tel" id="telefone" 
                        placeholder="DDD + Número" maxlength="11">
-                <span class="error" id="telefoneError">Insira um número válido</span>
+                <span class="error" id="telefoneError">Formato: apenas números</span>
             </div>
 
             <div class="form-group">
-                <label for="endereco">Endereço de Entrega:</label>
-                <textarea id="endereco" required rows="2"
-                          placeholder="Rua, número, bairro, complemento"></textarea>
-                <span class="error" id="enderecoError">Insira o endereço completo</span>
+                <label for="endereco">Setor:</label>
+                <input type="text" id="endereco" 
+                       placeholder="Ex: Norte, Sul, Centro, etc."
+                       maxlength="50">
+                <span class="error" id="enderecoError">Digite seu setor para facilitar a entrega</span>
             </div>
 
             <!-- Itens do Pedido -->
