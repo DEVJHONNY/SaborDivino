@@ -76,36 +76,36 @@ const PedidoController = {
 
     coletarItens() {
         const itens = [];
+        let temProduto = false;
+
         document.querySelectorAll('.item-pedido').forEach(item => {
             const categoriaSelect = item.querySelector('.categoria');
             const produtoSelect = item.querySelector('.produto');
             const quantidadeInput = item.querySelector('.quantidade');
             
-            if (!categoriaSelect || !produtoSelect || !quantidadeInput) {
-                console.warn('Elementos do item não encontrados');
+            // Debug logs
+            console.log('Categoria:', categoriaSelect?.value);
+            console.log('Produto:', produtoSelect?.value);
+            console.log('Quantidade:', quantidadeInput?.value);
+            
+            if (!categoriaSelect?.value || !produtoSelect?.value || !quantidadeInput?.value) {
                 return;
             }
 
-            if (!produtoSelect.value) {
-                console.warn('Nenhum produto selecionado');
-                return;
-            }
+            const categoria = categoriaSelect.value;
+            const quantidade = parseInt(quantidadeInput.value);
+            
+            // Buscar produto diretamente da categoria
+            const produtoId = parseInt(produtoSelect.value);
+            const produtoInfo = produtos[categoria]?.find(p => p.id === produtoId);
 
-            const [categoria, produtoId] = produtoSelect.value.split('-');
-            const quantidade = parseInt(quantidadeInput.value) || 0;
-
-            if (!categoria || !produtoId || quantidade <= 0) {
-                console.warn('Dados incompletos ou quantidade inválida');
-                return;
-            }
-
-            const produtoInfo = produtos[categoria]?.find(p => p.id === parseInt(produtoId));
-            if (produtoInfo) {
+            if (produtoInfo && quantidade > 0) {
                 // Verificar estoque
                 if (produtoInfo.estoque < quantidade) {
                     throw new Error(`Estoque insuficiente para ${produtoInfo.nome}`);
                 }
 
+                temProduto = true;
                 itens.push({
                     id: produtoInfo.id,
                     nome: produtoInfo.nome,
@@ -113,15 +113,14 @@ const PedidoController = {
                     quantidade: quantidade,
                     categoria: categoria
                 });
-            } else {
-                console.warn(`Produto ${produtoId} não encontrado na categoria ${categoria}`);
             }
         });
 
-        if (itens.length === 0) {
+        if (!temProduto) {
             throw new Error('Selecione pelo menos um produto para continuar');
         }
 
+        console.log('Itens coletados:', itens); // Debug
         return itens;
     },
 
