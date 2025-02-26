@@ -93,10 +93,11 @@ button:hover {
 
 .item-pedido {
     background: white;
-    border: 2px solid var(--secondary-color);
-    padding: 2rem; /* Aumentado de 1.5rem para 2rem */
-    margin-bottom: 2rem; /* Aumentado de 1rem para 2rem */
-    border-radius: var(--border-radius);
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    background-color: #f9f9f9;
     position: relative;
     animation: slideUp 0.3s ease;
 }
@@ -347,4 +348,20 @@ footer {
 /* Adicionar espaço após o botão de adicionar item */
 button[onclick="adicionarItem()"] {
     margin-bottom: 3rem;
+}
+
+.remove-item {
+    background-color: #ff4444;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    margin-top: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.remove-item:hover {
+    background-color: #cc0000;
 }
