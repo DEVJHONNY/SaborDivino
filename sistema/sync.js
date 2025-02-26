@@ -1,8 +1,15 @@
 const SyncSystem = {
     async verificarAtualizacoes() {
         try {
+            if (CONFIG.USAR_CATALOGO_LOCAL) {
+                return this.sincronizarCatalogoLocal();
+            }
+
             const response = await fetch(CONFIG.CATALOGO_URL);
-            if (!response.ok) throw new Error('Falha ao buscar catálogo');
+            if (!response.ok) {
+                console.warn('Falha ao buscar catálogo remoto, usando local...');
+                return this.sincronizarCatalogoLocal();
+            }
             
             const catalogoRemoto = await response.json();
             
@@ -14,8 +21,21 @@ const SyncSystem = {
             return false;
         } catch (error) {
             console.error('Erro na sincronização:', error);
-            return false;
+            return this.sincronizarCatalogoLocal();
         }
+    },
+
+    sincronizarCatalogoLocal() {
+        const versaoAtual = localStorage.getItem('versaoCatalogo');
+        
+        if (!versaoAtual || versaoAtual < CONFIG.VERSAO_CATALOGO || CONFIG.FORCAR_SINCRONIZACAO) {
+            console.log('Atualizando catálogo local...');
+            localStorage.setItem('estoqueProdutos', JSON.stringify(PRODUTOS_PADRAO));
+            localStorage.setItem('versaoCatalogo', CONFIG.VERSAO_CATALOGO);
+            return true;
+        }
+        
+        return false;
     },
 
     precisaAtualizar(versaoRemota) {
