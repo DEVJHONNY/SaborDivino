@@ -389,6 +389,88 @@
             }
         }
 
+        function removerProduto(index) {
+            if (confirm('Tem certeza que deseja remover este produto?')) {
+                const categoria = document.getElementById('categoriaProduto').value;
+                produtos[categoria].splice(index, 1);
+                localStorage.setItem('estoqueProdutos', JSON.stringify(produtos));
+                carregarProdutos();
+                carregarEstoque();
+            }
+        }
+
+        function adicionarNovoProduto() {
+            const categoria = document.getElementById('categoriaProduto').value;
+            const novoProduto = {
+                id: Date.now(),
+                nome: "Novo Produto",
+                preco: 0.00,
+                estoque: 0
+            };
+            
+            if (!produtos[categoria]) {
+                produtos[categoria] = [];
+            }
+            produtos[categoria].push(novoProduto);
+            
+            localStorage.setItem('estoqueProdutos', JSON.stringify(produtos));
+            carregarProdutos();
+            carregarEstoque();
+        }
+
+        function atualizarProduto(index, campo, valor) {
+            const categoria = document.getElementById('categoriaProduto').value;
+            if (campo === 'preco') {
+                valor = parseFloat(valor) || 0;
+            }
+            produtos[categoria][index][campo] = valor;
+        }
+
+        function salvarProdutos() {
+            const categoria = document.getElementById('categoriaProduto').value;
+            const items = Array.from(document.querySelectorAll('.produto-item')).map((item, index) => ({
+                id: produtos[categoria][index]?.id || Date.now() + index,
+                nome: item.querySelector('input[type="text"]').value,
+                preco: parseFloat(item.querySelector('input[type="number"]').value) || 0,
+                estoque: produtos[categoria][index]?.estoque || 0
+            }));
+            
+            produtos[categoria] = items;
+            localStorage.setItem('estoqueProdutos', JSON.stringify(produtos));
+            
+            carregarProdutos();
+            carregarEstoque();
+            alert('Produtos atualizados com sucesso!');
+        }
+
+        function confirmarReset() {
+            if (confirm('Tem certeza que deseja resetar todos os produtos para o padrão? Esta ação não pode ser desfeita!')) {
+                // Restaurar produtos padrão
+                produtos = {
+                    trufas: [
+                        { id: 1, nome: 'Trufa de Chocolate', preco: 4.50, estoque: 50 },
+                        { id: 2, nome: 'Trufa de Morango', preco: 4.50, estoque: 50 },
+                        { id: 3, nome: 'Trufa de Maracujá', preco: 4.50, estoque: 50 },
+                        { id: 4, nome: 'Trufa de Ninho', preco: 4.50, estoque: 50 },
+                        { id: 5, nome: 'Trufa de Prestígio', preco: 4.50, estoque: 50 }
+                    ],
+                    mousses: [
+                        { id: 6, nome: 'Mousse de Chocolate', preco: 8.00, estoque: 20 },
+                        { id: 7, nome: 'Mousse de Maracujá', preco: 8.00, estoque: 20 }
+                    ],
+                    empadas: [
+                        { id: 8, nome: 'Empada de Frango', preco: 6.00, estoque: 30 },
+                        { id: 9, nome: 'Empada de Palmito', preco: 6.00, estoque: 30 }
+                    ]
+                };
+                
+                localStorage.setItem('estoqueProdutos', JSON.stringify(produtos));
+                carregarProdutos();
+                carregarEstoque();
+                alert('Produtos resetados com sucesso!');
+            }
+        }
+
         // Inicialização
         document.addEventListener('DOMContentLoaded', () => {
             const estoqueLocal = localStorage.getItem('estoqueProdutos');
