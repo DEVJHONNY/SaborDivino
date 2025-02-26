@@ -19,8 +19,10 @@ const CONFIG = {
     // Força sincronização em todos os dispositivos
     FORCAR_SINCRONIZACAO: true,
 
-    // URL do arquivo raw do GitHub com o catálogo atual
+    // URL correta do arquivo raw do GitHub com o catálogo atual
     CATALOGO_URL: 'https://raw.githubusercontent.com/DEVJHONNY/SaborDivino/refs/heads/main/catalogo.json',
+    // ou caso prefira usar o arquivo local:
+    USAR_CATALOGO_LOCAL: false,
     
     // Configurações de sincronização
     SYNC: {
