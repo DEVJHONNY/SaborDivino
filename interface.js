@@ -7,27 +7,27 @@ const InterfaceController = {
         });
     },
 
-    atualizarProdutos(select) {
-        const categoria = select.value;
-        const itemPedido = select.closest('.item-pedido');
-        const produtoSelect = itemPedido.querySelector('.produto');
-        const estoqueInfo = itemPedido.querySelector('.estoque-info');
+    atualizarProdutos(categoriaSelect) {
+        const produtoSelect = categoriaSelect.parentElement.parentElement.querySelector('.produto');
+        const categoria = categoriaSelect.value;
         
         produtoSelect.innerHTML = '<option value="">Selecione um produto</option>';
         
-        if (categoria && produtos[categoria]) {
-            produtos[categoria].forEach(produto => {
-                produtoSelect.innerHTML += `
-                    <option value="${produto.id}" 
-                            data-preco="${produto.preco}" 
-                            data-estoque="${produto.estoque}"
-                            ${produto.estoque <= 0 ? 'disabled' : ''}>
-                        ${produto.nome} - R$ ${produto.preco.toFixed(2)}
-                        ${produto.estoque <= 0 ? ' (Sem estoque)' : ''}
-                    </option>`;
-            });
+        if (!categoria || !produtos[categoria]) {
+            console.warn('Categoria inválida ou não encontrada:', categoria);
+            return;
         }
-        this.calcularTotal();
+
+        produtos[categoria].forEach(produto => {
+            if (produto.estoque > 0) {
+                produtoSelect.innerHTML += `
+                    <option value="${produto.id}">
+                        ${produto.nome} - R$ ${produto.preco.toFixed(2)} 
+                        (${produto.estoque} disponíveis)
+                    </option>
+                `;
+            }
+        });
     },
 
     atualizarPrecoEstoque(select) {
