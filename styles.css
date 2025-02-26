@@ -93,13 +93,24 @@ button:hover {
 
 .item-pedido {
     background: white;
-    border: 1px solid #ddd;
-    padding: 15px;
-    margin-bottom: 15px;
-    border-radius: 8px;
-    background-color: #f9f9f9;
+    border: 2px solid var(--secondary-color);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: var(--border-radius);
     position: relative;
-    animation: slideUp 0.3s ease;
+    animation: slideIn 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.item-pedido .form-group {
+    margin-bottom: 1rem;
+}
+
+.item-pedido .estoque-info {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-top: 0.5rem;
 }
 
 .total {
@@ -347,21 +358,46 @@ footer {
 
 /* Adicionar espaço após o botão de adicionar item */
 button[onclick="adicionarItem()"] {
-    margin-bottom: 3rem;
+    background: var(--accent-color);
+    width: 100%;
+    margin: 1rem 0 2rem 0;
+    padding: 1rem;
+    font-weight: 600;
+    border-radius: var(--border-radius);
+    transition: all 0.3s ease;
+}
+
+button[onclick="adicionarItem()"]:hover {
+    background: var(--primary-color);
+    transform: translateY(-2px);
 }
 
 .remove-item {
     background-color: #ff4444;
     color: white;
     border: none;
-    border-radius: 4px;
-    padding: 8px 16px;
-    margin-top: 8px;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
     cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.3s;
+    transition: all 0.3s ease;
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
 }
 
 .remove-item:hover {
     background-color: #cc0000;
+    transform: scale(1.05);
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
