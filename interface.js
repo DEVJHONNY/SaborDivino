@@ -73,29 +73,56 @@ const InterfaceController = {
 
     adicionarItem() {
         const container = document.getElementById('itensPedido');
-        const novoItem = container.children[0].cloneNode(true);
+        const novoItem = document.createElement('div');
+        novoItem.className = 'item-pedido';
         const numItems = container.children.length + 1;
 
-        // Atualizar IDs e labels
-        ['categoria', 'produto', 'quantidade'].forEach(tipo => {
-            const elemento = novoItem.querySelector(`.${tipo}`);
-            if (elemento) {
-                elemento.id = `${tipo}-${numItems}`;
-                elemento.name = `${tipo}-${numItems}`;
-                const label = elemento.previousElementSibling;
-                if (label) label.setAttribute('for', `${tipo}-${numItems}`);
-            }
-        });
+        novoItem.innerHTML = `
+            <div class="form-group">
+                <label for="categoria-${numItems}">Categoria:</label>
+                <select class="categoria" id="categoria-${numItems}" name="categoria-${numItems}">
+                    <option value="">Selecione uma categoria</option>
+                    <option value="trufas">Trufas</option>
+                    <option value="mousses">Mousses</option>
+                    <option value="empadas">Empadas</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="produto-${numItems}">Produto:</label>
+                <select class="produto" id="produto-${numItems}" name="produto-${numItems}">
+                    <option value="">Selecione um produto</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="quantidade-${numItems}">Quantidade:</label>
+                <input type="number" 
+                       class="quantidade" 
+                       id="quantidade-${numItems}" 
+                       name="quantidade-${numItems}" 
+                       min="1" 
+                       value="1">
+                <span class="estoque-info"></span>
+            </div>
+            <button type="button" class="remove-item" onclick="InterfaceController.removerItem(this)">
+                🗑️ Remover Item
+            </button>
+        `;
 
-        // Limpar seleções
-        novoItem.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
-        novoItem.querySelector('.quantidade').value = 1;
-        novoItem.querySelector('.estoque-info').textContent = '';
-
-        // Reconectar eventos
+        // Conectar eventos
         this.conectarEventos(novoItem);
         
         container.appendChild(novoItem);
+        this.calcularTotal();
+    },
+
+    removerItem(button) {
+        const item = button.closest('.item-pedido');
+        if (document.querySelectorAll('.item-pedido').length > 1) {
+            item.remove();
+            this.calcularTotal();
+        } else {
+            alert('É necessário manter pelo menos um item no pedido');
+        }
     },
 
     conectarEventos(container) {
@@ -162,6 +189,7 @@ window.atualizarInterfaceEstoque = InterfaceController.atualizarInterfaceEstoque
 window.atualizarProdutos = InterfaceController.atualizarProdutos.bind(InterfaceController);
 window.atualizarPrecoEstoque = InterfaceController.atualizarPrecoEstoque.bind(InterfaceController);
 window.adicionarItem = InterfaceController.adicionarItem.bind(InterfaceController);
+window.removerItem = InterfaceController.removerItem.bind(InterfaceController);
 window.mostrarOpcoesPix = InterfaceController.mostrarOpcoesPix.bind(InterfaceController);
 window.ocultarOpcoesPix = InterfaceController.ocultarOpcoesPix.bind(InterfaceController);
 window.mostrarQRCode = InterfaceController.mostrarQRCode.bind(InterfaceController);
