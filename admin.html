@@ -486,7 +486,22 @@
             document.getElementById('filtroPeriodo')?.addEventListener('change', () => {
                 carregarRelatorio(tipoRelatorioAtual, document.querySelector('.tab-btn.active'));
             });
+
+            // Adicionar listener para mudança de categoria
+            const categoriaProduto = document.getElementById('categoriaProduto');
+            if (categoriaProduto) {
+                categoriaProduto.addEventListener('change', () => {
+                    carregarProdutos();
+                });
+            }
         });
+
+        // Exportar funções para o escopo global
+        window.removerProduto = removerProduto;
+        window.adicionarNovoProduto = adicionarNovoProduto;
+        window.atualizarProduto = atualizarProduto;
+        window.salvarProdutos = salvarProdutos;
+        window.confirmarReset = confirmarReset;
     </script>
 </body>
 </html>
