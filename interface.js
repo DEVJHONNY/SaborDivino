@@ -36,31 +36,34 @@ const InterfaceController = {
         const quantidadeInput = itemPedido.querySelector('.quantidade');
         
         if (select.value) {
-            const [categoria, produtoId] = select.value.split('-');
-            const produto = produtos[categoria]?.find(p => p.id === parseInt(produtoId));
+            const produtoId = parseInt(select.value);
+            const categoria = select.closest('.item-pedido').querySelector('.categoria').value;
+            const produto = produtos[categoria]?.find(p => p.id === produtoId);
             
             if (produto) {
                 estoqueInfo.textContent = `Disponível: ${produto.estoque} unidades`;
                 quantidadeInput.max = produto.estoque;
                 quantidadeInput.value = Math.min(parseInt(quantidadeInput.value) || 1, produto.estoque);
+                
+                // Recalcular total sempre que um produto é selecionado
+                this.calcularTotal();
             }
         } else {
             estoqueInfo.textContent = '';
             quantidadeInput.removeAttribute('max');
         }
-        
-        this.calcularTotal();
     },
 
     calcularTotal() {
         let total = 0;
         document.querySelectorAll('.item-pedido').forEach(item => {
+            const categoria = item.querySelector('.categoria').value;
             const produtoSelect = item.querySelector('.produto');
             const quantidade = parseInt(item.querySelector('.quantidade').value) || 0;
             
-            if (produtoSelect.value) {
-                const [categoria, produtoId] = produtoSelect.value.split('-');
-                const produto = produtos[categoria]?.find(p => p.id === parseInt(produtoId));
+            if (categoria && produtoSelect.value) {
+                const produtoId = parseInt(produtoSelect.value);
+                const produto = produtos[categoria]?.find(p => p.id === produtoId);
                 if (produto) {
                     total += produto.preco * quantidade;
                 }
