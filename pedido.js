@@ -157,12 +157,49 @@ const PedidoController = {
     },
 
     limparCarrinho() {
+        // Limpar dados do cliente
         document.getElementById('nome').value = '';
         document.getElementById('telefone').value = '';
         document.getElementById('endereco').value = '';
-        document.querySelectorAll('input[name="metodo-pagamento"]').forEach(radio => radio.checked = false);
+        
+        // Limpar método de pagamento
+        document.querySelectorAll('input[name="metodo-pagamento"]').forEach(radio => {
+            radio.checked = false;
+        });
+        
+        // Ocultar container do PIX
+        document.getElementById('pix-container').style.display = 'none';
+        
+        // Limpar informações do PIX
+        document.getElementById('qr-code').style.display = 'none';
+        document.getElementById('pix-banco').textContent = '';
+        document.getElementById('pix-nome').textContent = '';
+        document.getElementById('pix-chave').textContent = '';
+        
+        // Limpar itens do pedido
         document.getElementById('itensPedido').innerHTML = '';
         this.adicionarItemInicial();
+        
+        // Resetar total
+        document.getElementById('totalPedido').innerText = 'Total: R$ 0,00';
+        
+        // Limpar mensagens de erro
+        document.querySelectorAll('.error').forEach(error => {
+            error.style.display = 'none';
+        });
+
+        // Notificar o usuário
+        LoadingSystem.show('Limpando formulário...');
+        setTimeout(() => {
+            LoadingSystem.hide();
+            Swal.fire({
+                title: 'Formulário Limpo',
+                text: 'Você pode fazer um novo pedido agora!',
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }, 500);
     },
 
     adicionarItemInicial() {
