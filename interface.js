@@ -21,13 +21,16 @@ const InterfaceController = {
         produtos[categoria].forEach(produto => {
             if (produto.estoque > 0) {
                 produtoSelect.innerHTML += `
-                    <option value="${produto.id}">
+                    <option value="${categoria}-${produto.id}">
                         ${produto.nome} - R$ ${produto.preco.toFixed(2)} 
                         (${produto.estoque} disponíveis)
                     </option>
                 `;
             }
         });
+
+        // Atualizar total ao mudar categoria
+        this.calcularTotal();
     },
 
     atualizarPrecoEstoque(select) {
@@ -36,34 +39,32 @@ const InterfaceController = {
         const quantidadeInput = itemPedido.querySelector('.quantidade');
         
         if (select.value) {
-            const produtoId = parseInt(select.value);
-            const categoria = select.closest('.item-pedido').querySelector('.categoria').value;
-            const produto = produtos[categoria]?.find(p => p.id === produtoId);
+            const [categoria, produtoId] = select.value.split('-');
+            const produto = produtos[categoria]?.find(p => p.id === parseInt(produtoId));
             
             if (produto) {
                 estoqueInfo.textContent = `Disponível: ${produto.estoque} unidades`;
                 quantidadeInput.max = produto.estoque;
                 quantidadeInput.value = Math.min(parseInt(quantidadeInput.value) || 1, produto.estoque);
-                
-                // Recalcular total sempre que um produto é selecionado
-                this.calcularTotal();
             }
         } else {
             estoqueInfo.textContent = '';
             quantidadeInput.removeAttribute('max');
         }
+        
+        // Sempre calcular o total quando mudar o produto
+        this.calcularTotal();
     },
 
     calcularTotal() {
         let total = 0;
         document.querySelectorAll('.item-pedido').forEach(item => {
-            const categoria = item.querySelector('.categoria').value;
             const produtoSelect = item.querySelector('.produto');
             const quantidade = parseInt(item.querySelector('.quantidade').value) || 0;
             
-            if (categoria && produtoSelect.value) {
-                const produtoId = parseInt(produtoSelect.value);
-                const produto = produtos[categoria]?.find(p => p.id === produtoId);
+            if (produtoSelect.value) {
+                const [categoria, produtoId] = produtoSelect.value.split('-');
+                const produto = produtos[categoria]?.find(p => p.id === parseInt(produtoId));
                 if (produto) {
                     total += produto.preco * quantidade;
                 }
