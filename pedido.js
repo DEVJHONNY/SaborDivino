@@ -87,26 +87,34 @@ const PedidoController = {
             }
 
             const categoria = categoriaSelect.value;
-            const produtoId = produtoSelect.value;
-            const quantidade = parseInt(quantidadeInput.value);
+            const quantidade = parseInt(quantidadeInput.value) || 0;
 
-            if (!categoria || !produtoId || !quantidade) {
-                console.warn('Dados do item incompletos');
+            if (!categoria || quantidade <= 0) {
+                console.warn('Dados incompletos ou quantidade inválida');
                 return;
             }
 
-            if (!produtos[categoria]) {
-                console.error(`Categoria ${categoria} não encontrada`);
+            // Pegar o produto diretamente do select
+            const produtoId = parseInt(produtoSelect.value);
+            if (!produtoId) {
+                console.warn('ID do produto não encontrado');
                 return;
             }
 
-            const produtoInfo = produtos[categoria].find(p => p.id === parseInt(produtoId));
+            // Buscar o produto na categoria correta
+            const produtoInfo = produtos[categoria]?.find(p => p.id === produtoId);
             if (produtoInfo) {
+                // Verificar estoque
+                if (produtoInfo.estoque < quantidade) {
+                    throw new Error(`Estoque insuficiente para ${produtoInfo.nome}`);
+                }
+
                 itens.push({
                     id: produtoInfo.id,
                     nome: produtoInfo.nome,
                     preco: produtoInfo.preco,
-                    quantidade: quantidade
+                    quantidade: quantidade,
+                    categoria: categoria
                 });
             } else {
                 console.warn(`Produto ${produtoId} não encontrado na categoria ${categoria}`);
