@@ -21,8 +21,8 @@
             <h2>🔐 Área Administrativa</h2>
             <form id="formLogin" method="post" onsubmit="event.preventDefault(); login();">
                 <div class="form-group">
-                    <label for="senha">Senha:</label>
-                    <input type="password" id="senha" name="senha" placeholder="Digite a senha" required>
+                    <label for="senha-login">Senha:</label>
+                    <input type="password" id="senha-login" name="senha" placeholder="Digite a senha" required>
                     <button type="submit">Entrar</button>
                 </div>
             </form>
@@ -40,7 +40,7 @@
             <div id="estoqueSecao" class="secao-admin">
                 <h2>📦 Gerenciar Estoque</h2>
                 <div id="estoqueList"></div>
-                <button onclick="salvarEstoque()" class="enviar">Salvar Alterações</button>
+                <button type="button" onclick="salvarEstoque()">Salvar Alterações</button>
             </div>
 
             <div id="produtosSecao" class="secao-admin" style="display: none;">
@@ -54,7 +54,7 @@
                     </select>
                 </div>
                 <div id="listaProdutos"></div>
-                <button onclick="adicionarNovoProduto()" class="add-btn">+ Adicionar Novo Produto</button>
+                <button type="button" onclick="adicionarNovoProduto()">+ Adicionar Novo Produto</button>
                 <div class="button-group">
                     <button onclick="salvarProdutos()" class="enviar">Salvar Alterações</button>
                     <button onclick="confirmarReset()" class="reset-btn">Resetar para Padrão</button>
@@ -120,7 +120,7 @@
         let tempoBloqueioPag = 0;
         
         async function login() {
-            const senha = document.getElementById('senha').value.trim(); // Remover espaços
+            const senha = document.getElementById('senha-login').value.trim(); // Remover espaços
             
             // Verificar bloqueio
             if (tempoBloqueioPag > Date.now()) {
@@ -170,14 +170,16 @@
                 const categoriaDiv = document.createElement('div');
                 categoriaDiv.innerHTML = `<h3>${categoria.toUpperCase()}</h3>`;
 
-                items.forEach(produto => {
+                items.forEach((produto, index) => {
+                    const inputId = `estoque-${categoria}-${produto.id}`;
                     categoriaDiv.innerHTML += `
                         <div class="form-group">
-                            <label>${produto.nome}</label>
+                            <label for="${inputId}">${produto.nome}:</label>
                             <input type="number" 
-                                   id="estoque-${produto.id}" 
+                                   id="${inputId}" 
                                    value="${produto.estoque}" 
-                                   min="0">
+                                   min="0"
+                                   onchange="atualizarEstoque('${categoria}', ${produto.id}, this.value)">
                         </div>
                     `;
                 });
@@ -189,7 +191,7 @@
         function salvarEstoque() {
             Object.entries(produtos).forEach(([categoria, items]) => {
                 items.forEach(produto => {
-                    const novoEstoque = parseInt(document.getElementById(`estoque-${produto.id}`).value);
+                    const novoEstoque = parseInt(document.getElementById(`estoque-${categoria}-${produto.id}`).value);
                     produto.estoque = novoEstoque;
                 });
             });
@@ -382,16 +384,16 @@
             
             if (produtos[categoria]) {
                 produtos[categoria].forEach((produto, index) => {
-                    const produtoId = `produto-${index}`;
-                    const precoId = `preco-${index}`;
+                    const nomeId = `produto-nome-${categoria}-${produto.id}`;
+                    const precoId = `produto-preco-${categoria}-${produto.id}`;
                     
                     listaProdutos.innerHTML += `
                         <div class="produto-item">
                             <div class="form-group">
-                                <label for="${produtoId}">Nome do Produto:</label>
+                                <label for="${nomeId}">Nome do Produto:</label>
                                 <input type="text" 
-                                       id="${produtoId}"
-                                       name="${produtoId}"
+                                       id="${nomeId}"
+                                       name="${nomeId}"
                                        value="${produto.nome}" 
                                        onchange="atualizarProduto(${index}, 'nome', this.value)">
                             </div>
@@ -404,7 +406,7 @@
                                        value="${produto.preco}" 
                                        onchange="atualizarProduto(${index}, 'preco', this.value)">
                             </div>
-                            <button onclick="removerProduto(${index})" class="remove-btn">Remover</button>
+                            <button type="button" onclick="removerProduto(${index})" class="remove-btn">Remover</button>
                         </div>
                     `;
                 });
