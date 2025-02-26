@@ -14,7 +14,7 @@ const CONFIG = {
     DEBUG: true, // Adicionar modo debug para ajudar na identificação de erros
 
     // Adicionar versão do catálogo
-    VERSAO_CATALOGO: "2024.02.26.1", // Formato: YYYY.MM.DD.versao
+    VERSAO_CATALOGO: "2024.02.26.3", // Formato: YYYY.MM.DD.versao
 
     // Força sincronização em todos os dispositivos
     FORCAR_SINCRONIZACAO: true
