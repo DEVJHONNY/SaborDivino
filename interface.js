@@ -34,13 +34,16 @@ const InterfaceController = {
         const itemPedido = select.closest('.item-pedido');
         const estoqueInfo = itemPedido.querySelector('.estoque-info');
         const quantidadeInput = itemPedido.querySelector('.quantidade');
-        const option = select.selectedOptions[0];
         
-        if (option && option.dataset.estoque) {
-            const estoqueDisponivel = parseInt(option.dataset.estoque);
-            estoqueInfo.textContent = `Disponível: ${estoqueDisponivel} unidades`;
-            quantidadeInput.max = estoqueDisponivel;
-            quantidadeInput.value = Math.min(parseInt(quantidadeInput.value) || 1, estoqueDisponivel);
+        if (select.value) {
+            const [categoria, produtoId] = select.value.split('-');
+            const produto = produtos[categoria]?.find(p => p.id === parseInt(produtoId));
+            
+            if (produto) {
+                estoqueInfo.textContent = `Disponível: ${produto.estoque} unidades`;
+                quantidadeInput.max = produto.estoque;
+                quantidadeInput.value = Math.min(parseInt(quantidadeInput.value) || 1, produto.estoque);
+            }
         } else {
             estoqueInfo.textContent = '';
             quantidadeInput.removeAttribute('max');
@@ -55,12 +58,17 @@ const InterfaceController = {
             const produtoSelect = item.querySelector('.produto');
             const quantidade = parseInt(item.querySelector('.quantidade').value) || 0;
             
-            if (produtoSelect.selectedOptions[0]) {
-                const preco = parseFloat(produtoSelect.selectedOptions[0].dataset.preco) || 0;
-                total += preco * quantidade;
+            if (produtoSelect.value) {
+                const [categoria, produtoId] = produtoSelect.value.split('-');
+                const produto = produtos[categoria]?.find(p => p.id === parseInt(produtoId));
+                if (produto) {
+                    total += produto.preco * quantidade;
+                }
             }
         });
-        document.getElementById('totalPedido').innerText = `Total: R$ ${total.toFixed(2)}`;
+        
+        document.getElementById('totalPedido').innerText = 
+            `Total: R$ ${total.toFixed(2).replace('.', ',')}`;
     },
 
     adicionarItem() {
