@@ -89,15 +89,23 @@ const PedidoController = {
             console.log('Quantidade:', quantidadeInput?.value);
             
             if (!categoriaSelect?.value || !produtoSelect?.value || !quantidadeInput?.value) {
+                console.warn('Item incompleto, pulando...');
                 return;
             }
 
-            const categoria = categoriaSelect.value;
+            const [categoria, produtoIdStr] = produtoSelect.value.split('-');
             const quantidade = parseInt(quantidadeInput.value);
-            
-            // Buscar produto diretamente da categoria
-            const produtoId = parseInt(produtoSelect.value);
-            const produtoInfo = produtos[categoria]?.find(p => p.id === produtoId);
+            const produtoId = parseInt(produtoIdStr);
+
+            console.log('Buscando produto:', { categoria, produtoId });
+
+            if (!produtos[categoria]) {
+                console.warn('Categoria não encontrada:', categoria);
+                return;
+            }
+
+            const produtoInfo = produtos[categoria].find(p => p.id === produtoId);
+            console.log('Produto encontrado:', produtoInfo);
 
             if (produtoInfo && quantidade > 0) {
                 // Verificar estoque
@@ -120,7 +128,7 @@ const PedidoController = {
             throw new Error('Selecione pelo menos um produto para continuar');
         }
 
-        console.log('Itens coletados:', itens); // Debug
+        console.log('Itens coletados:', itens);
         return itens;
     },
 
