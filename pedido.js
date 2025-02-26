@@ -83,52 +83,58 @@ const PedidoController = {
             const produtoSelect = item.querySelector('.produto');
             const quantidadeInput = item.querySelector('.quantidade');
             
-            // Debug logs
-            console.log('Categoria:', categoriaSelect?.value);
-            console.log('Produto:', produtoSelect?.value);
-            console.log('Quantidade:', quantidadeInput?.value);
+            // Debug mais detalhado
+            console.log('Verificando item:', {
+                categoria: categoriaSelect?.value,
+                produto: produtoSelect?.value,
+                quantidade: quantidadeInput?.value
+            });
             
-            if (!categoriaSelect?.value || !produtoSelect?.value || !quantidadeInput?.value) {
-                console.warn('Item incompleto, pulando...');
+            if (!categoriaSelect?.value || !produtoSelect?.value) {
+                console.warn('Item sem categoria ou produto selecionado');
+                return;
+            }
+
+            const quantidade = parseInt(quantidadeInput?.value || '0');
+            if (quantidade <= 0) {
+                console.warn('Quantidade inválida');
                 return;
             }
 
             const [categoria, produtoIdStr] = produtoSelect.value.split('-');
-            const quantidade = parseInt(quantidadeInput.value);
-            const produtoId = parseInt(produtoIdStr);
-
-            console.log('Buscando produto:', { categoria, produtoId });
-
-            if (!produtos[categoria]) {
-                console.warn('Categoria não encontrada:', categoria);
+            if (!categoria || !produtoIdStr) {
+                console.warn('Formato inválido do valor do produto:', produtoSelect.value);
                 return;
             }
 
-            const produtoInfo = produtos[categoria].find(p => p.id === produtoId);
-            console.log('Produto encontrado:', produtoInfo);
+            console.log('Buscando produto:', categoria, produtoIdStr);
+            const produtoInfo = produtos[categoria]?.find(p => p.id.toString() === produtoIdStr);
 
-            if (produtoInfo && quantidade > 0) {
-                // Verificar estoque
-                if (produtoInfo.estoque < quantidade) {
-                    throw new Error(`Estoque insuficiente para ${produtoInfo.nome}`);
-                }
-
-                temProduto = true;
-                itens.push({
-                    id: produtoInfo.id,
-                    nome: produtoInfo.nome,
-                    preco: produtoInfo.preco,
-                    quantidade: quantidade,
-                    categoria: categoria
-                });
+            if (!produtoInfo) {
+                console.warn(`Produto não encontrado: ${categoria}-${produtoIdStr}`);
+                return;
             }
+
+            if (produtoInfo.estoque < quantidade) {
+                throw new Error(`Estoque insuficiente para ${produtoInfo.nome}`);
+            }
+
+            temProduto = true;
+            itens.push({
+                id: produtoInfo.id,
+                nome: produtoInfo.nome,
+                preco: produtoInfo.preco,
+                quantidade: quantidade,
+                categoria: categoria
+            });
+            
+            console.log('Item adicionado:', itens[itens.length - 1]);
         });
 
         if (!temProduto) {
             throw new Error('Selecione pelo menos um produto para continuar');
         }
 
-        console.log('Itens coletados:', itens);
         return itens;
     },
 
