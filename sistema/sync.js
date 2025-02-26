@@ -44,39 +44,41 @@ const SyncSystem = {
     },
 
     async atualizarCatalogo(catalogoRemoto) {
-        // Fazer backup antes de atualizar
-        await BackupSystem.criarBackup();
+        try {
+            // Fazer backup antes de atualizar
+            await BackupSystem.criarBackup();
 
-        // Atualizar produtos
-        localStorage.setItem('estoqueProdutos', JSON.stringify(catalogoRemoto.produtos));
-        localStorage.setItem('versaoCatalogo', catalogoRemoto.versao);
-        
-        // Atualizar produtos em memória
-        Object.assign(produtos, catalogoRemoto.produtos);
-        
-        // Atualizar interface se necessário
-        if (typeof InterfaceController !== 'undefined') {
-            InterfaceController.atualizarInterfaceEstoque();
+            // Atualizar produtos
+            localStorage.setItem('estoqueProdutos', JSON.stringify(catalogoRemoto.produtos));
+            localStorage.setItem('versaoCatalogo', catalogoRemoto.versao);
+            
+            // Atualizar produtos em memória
+            Object.assign(produtos, catalogoRemoto.produtos);
+            
+            // Atualizar interface se necessário
+            if (typeof InterfaceController !== 'undefined') {
+                InterfaceController.atualizarInterfaceEstoque();
+            }
+
+            CONFIG.SYNC.LAST_UPDATE = new Date().toISOString();
+            
+            console.log('Catálogo atualizado com sucesso!');
+        } catch (error) {
+            console.error('Erro ao atualizar catálogo:', error);
+            throw error;
         }
-
-        CONFIG.SYNC.LAST_UPDATE = new Date().toISOString();
-        
-        console.log('Catálogo atualizado com sucesso!');
-    },
-
-    iniciarSincronizacaoAutomatica() {
-        // Verificar atualizações imediatamente
-        this.verificarAtualizacoes();
-
-        // Configurar verificação periódica
-        setInterval(() => {
-            this.verificarAtualizacoes();
-        }, CONFIG.SYNC.CHECK_INTERVAL);
     }
 };
 
-// Iniciar sincronização
-SyncSystem.iniciarSincronizacaoAutomatica();
+// Iniciar sincronização após um pequeno delay
+setTimeout(() => {
+    SyncSystem.verificarAtualizacoes();
+}, 1000);
+
+// Configurar verificação periódica
+setInterval(() => {
+    SyncSystem.verificarAtualizacoes();
+}, CONFIG.SYNC.CHECK_INTERVAL);
 
 // Exportar para uso global
 window.SyncSystem = SyncSystem;
