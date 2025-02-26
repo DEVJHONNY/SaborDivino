@@ -11,7 +11,13 @@ const CONFIG = {
         tipo_chave: "Aleatório",
         qrcode_image: "https://i.ibb.co/m558LYPX/Whats-App-Image-2025-02-12-at-08-36-21.jpg"
     },
-    DEBUG: true // Adicionar modo debug para ajudar na identificação de erros
+    DEBUG: true, // Adicionar modo debug para ajudar na identificação de erros
+
+    // Adicionar versão do catálogo
+    VERSAO_CATALOGO: "2024.02.26.1", // Formato: YYYY.MM.DD.versao
+
+    // Força sincronização em todos os dispositivos
+    FORCAR_SINCRONIZACAO: true
 };
 
 // Função para criar hash (SHA-256)
