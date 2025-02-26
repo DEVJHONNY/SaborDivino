@@ -86,23 +86,20 @@ const PedidoController = {
                 return;
             }
 
-            const categoria = categoriaSelect.value;
+            if (!produtoSelect.value) {
+                console.warn('Nenhum produto selecionado');
+                return;
+            }
+
+            const [categoria, produtoId] = produtoSelect.value.split('-');
             const quantidade = parseInt(quantidadeInput.value) || 0;
 
-            if (!categoria || quantidade <= 0) {
+            if (!categoria || !produtoId || quantidade <= 0) {
                 console.warn('Dados incompletos ou quantidade inválida');
                 return;
             }
 
-            // Pegar o produto diretamente do select
-            const produtoId = parseInt(produtoSelect.value);
-            if (!produtoId) {
-                console.warn('ID do produto não encontrado');
-                return;
-            }
-
-            // Buscar o produto na categoria correta
-            const produtoInfo = produtos[categoria]?.find(p => p.id === produtoId);
+            const produtoInfo = produtos[categoria]?.find(p => p.id === parseInt(produtoId));
             if (produtoInfo) {
                 // Verificar estoque
                 if (produtoInfo.estoque < quantidade) {
