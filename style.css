@@ -1,0 +1,113 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap');
+
+:root {
+    --primary-color: #ff758c;
+    --secondary-color: #ffd3b6;
+    --accent-color: #ffaaa5;
+    --background-color: #fff5f5;
+    --text-color: #4a4a4a;
+    --text-light: #666;
+    --shadow: 0 8px 30px rgba(0,0,0,0.12);
+    --border-radius: 20px;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Playfair Display', serif;
+    background-color: var(--background-color);
+    background-image: linear-gradient(rgba(255, 117, 140, 0.05), rgba(255, 211, 182, 0.1));
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.maintenance-container {
+    text-align: center;
+    padding: 3.5rem;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8));
+    border: 3px solid var(--primary-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow),
+                0 0 20px rgba(255, 117, 140, 0.2);
+    backdrop-filter: blur(10px);
+    max-width: 600px;
+    position: relative;
+}
+
+.maintenance-container::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border: 2px solid var(--accent-color);
+    border-radius: calc(var(--border-radius) + 2px);
+    opacity: 0.5;
+}
+
+img {
+    width: 180px;
+    margin-bottom: 2rem;
+    filter: sepia(1) hue-rotate(355deg) saturate(0.8);
+}
+
+img.logo {
+    width: 280px;
+    height: auto;
+    margin-bottom: 2.5rem;
+    padding: 15px;
+    background: linear-gradient(45deg, rgba(255, 211, 182, 0.1), rgba(255, 170, 165, 0.05));
+    border: 2px solid var(--secondary-color);
+    border-radius: calc(var(--border-radius) - 5px);
+    transition: transform 0.3s ease, filter 0.3s ease;
+    filter: drop-shadow(0 0 15px rgba(255, 117, 140, 0.2));
+}
+
+img.logo:hover {
+    transform: scale(1.02);
+    filter: drop-shadow(0 0 20px rgba(255, 117, 140, 0.3));
+}
+
+h1 {
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
+    font-size: 2.8em;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    font-weight: 700;
+}
+
+p {
+    color: var(--text-color);
+    margin: 1rem 0;
+    font-size: 1.3em;
+    line-height: 1.8;
+    letter-spacing: 1.2px;
+}
+
+p:last-child {
+    color: var(--text-light);
+}
+
+@media (max-width: 768px) {
+    .maintenance-container {
+        margin: 20px;
+        padding: 2rem;
+    }
+
+    img.logo {
+        width: 220px;
+    }
+
+    h1 {
+        font-size: 2.2em;
+    }
+
+    p {
+        font-size: 1.1em;
+    }
+}
