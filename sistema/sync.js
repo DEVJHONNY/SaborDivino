@@ -1,31 +1,23 @@
 const SyncSystem = {
     async verificarAtualizacoes() {
         try {
-            console.log('Verificando atualizações...');
-            
+            // Forçar sincronização a cada verificação
             const response = await fetch(CONFIG.CATALOGO_URL);
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error('Erro ao buscar catálogo');
             }
+
+            const dadosServidor = await response.json();
             
-            const catalogoRemoto = await response.json();
-            console.log('Catálogo remoto:', catalogoRemoto);
+            // Sempre atualizar dados locais com dados do servidor
+            localStorage.setItem('estoqueProdutos', JSON.stringify(dadosServidor.produtos));
+            localStorage.setItem('historico_tickets', JSON.stringify(dadosServidor.tickets || []));
+            localStorage.setItem('ultima_sincronizacao', new Date().toISOString());
             
-            // Atualizar produtos com dados do GitHub
-            if (catalogoRemoto.produtos) {
-                Object.assign(produtos, catalogoRemoto.produtos);
-                localStorage.setItem('estoqueProdutos', JSON.stringify(catalogoRemoto.produtos));
-                localStorage.setItem('versaoCatalogo', catalogoRemoto.versao);
-                
-                console.log('Produtos atualizados:', produtos);
-                console.log('Nova versão:', catalogoRemoto.versao);
-                
-                // Forçar recarga da interface
-                if (typeof carregarEstoque === 'function') {
-                    carregarEstoque();
-                }
-            }
+            // Atualizar objeto produtos global
+            Object.assign(window.produtos, dadosServidor.produtos);
             
+            console.log('Sincronização concluída:', dadosServidor);
             return true;
         } catch (error) {
             console.error('Erro na sincronização:', error);
@@ -99,8 +91,24 @@ const SyncSystem = {
             console.error('Erro ao atualizar catálogo no GitHub:', error);
             return false;
         }
+    },
+
+    // Adicionar sincronização automática
+    iniciarSincronizacaoAutomatica() {
+        // Sincronizar ao carregar
+        this.verificarAtualizacoes();
+
+        // Sincronizar a cada 30 segundos
+        setInterval(() => {
+            this.verificarAtualizacoes();
+        }, 30 * 1000);
     }
 };
+
+// Iniciar sincronização automática
+document.addEventListener('DOMContentLoaded', () => {
+    SyncSystem.iniciarSincronizacaoAutomatica();
+});
 
 // Exportar para uso global
 window.SyncSystem = SyncSystem;
