@@ -20,7 +20,7 @@ const CONFIG = {
     FORCAR_SINCRONIZACAO: false, // Não forçar sincronização
 
     // Corrigir URL do catálogo - ajustar para site-oficial
-    CATALOGO_URL: 'https://raw.githubusercontent.com/DEVJHONNY/SaborDivino/refs/heads/SiteOfcial/catalogo.json',
+    CATALOGO_URL: 'https://raw.githubusercontent.com/DEVJHONNY/SaborDivino/refs/heads/Site-Oficial/catalogo.json',
     // ou caso prefira usar o arquivo local:
     USAR_CATALOGO_LOCAL: false, // Usar local por padrão
     
