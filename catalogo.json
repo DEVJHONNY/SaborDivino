@@ -8,7 +8,7 @@
             { "id": 4, "nome": "Trufa de Ninho", "preco": 4.50, "estoque": 0 },
             { "id": 5, "nome": "Trufa de Coco", "preco": 4.50, "estoque": 2 },
             { "id": 6, "nome": "Trufa de Amendoim", "preco": 4.50, "estoque": 4 },
-            { "id": 7, "nome": "Trufa de Ferreiro", "preco": 4.50, "estoque": 11 },
+            { "id": 7, "nome": "Trufa de Ferreiro", "preco": 4.50, "estoque": 6 },
             { "id": 8, "nome": "Trufa de Castanha", "preco": 4.50, "estoque": 3 }
         ],
         "mousses": [
