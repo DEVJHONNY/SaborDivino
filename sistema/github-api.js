@@ -1,40 +1,22 @@
 const GitHubAPI = {
-    async atualizarCatalogo(produtos) {
+    async atualizarCatalogo(dados) {
         try {
-            // Verificar token
+            // Verificar se está no modo público
+            if (CONFIG.USAR_CATALOGO_LOCAL) {
+                console.log('Usando catálogo local, pulando atualização GitHub');
+                return true;
+            }
+
+            // Em produção, não atualizar se não houver token
             if (!CONFIG.GITHUB.token) {
-                throw new Error('Token do GitHub não configurado');
+                console.log('Modo público: atualizações desativadas');
+                return true;
             }
 
-            const novoConteudo = {
-                versao: new Date().toISOString().split('T')[0] + '.1',
-                produtos: produtos,
-                ultima_atualizacao: new Date().toISOString(),
-                meta: {
-                    moeda: "BRL",
-                    formato_preco: "0.00",
-                    unidade_estoque: "unidades"
-                }
-            };
-
-            // Primeiro, tentar validar o token
-            const testResponse = await fetch('https://api.github.com/user', {
-                headers: {
-                    'Authorization': `token ${CONFIG.GITHUB.token}`,
-                    'Accept': 'application/vnd.github.v3+json'
-                }
-            });
-
-            if (!testResponse.ok) {
-                throw new Error('Token inválido ou expirado');
-            }
-
-            // Debug
-            console.log('Tentando atualizar GitHub...');
-            console.log('URL:', `https://api.github.com/repos/${CONFIG.GITHUB.owner}/${CONFIG.GITHUB.repo}/contents/${CONFIG.GITHUB.filepath}`);
-
-            // Primeiro, obter o arquivo atual para pegar o SHA
-            const response = await fetch(`https://api.github.com/repos/${CONFIG.GITHUB.owner}/${CONFIG.GITHUB.repo}/contents/${CONFIG.GITHUB.filepath}`, {
+            const url = `https://api.github.com/repos/${CONFIG.GITHUB.owner}/${CONFIG.GITHUB.repo}/contents/${CONFIG.GITHUB.filepath}`;
+            
+            // Buscar arquivo atual
+            const response = await fetch(url, {
                 headers: {
                     'Authorization': `token ${CONFIG.GITHUB.token}`,
                     'Accept': 'application/vnd.github.v3+json'
@@ -42,60 +24,38 @@ const GitHubAPI = {
             });
 
             if (!response.ok) {
-                throw new Error(`Erro ao buscar arquivo: ${response.status} ${response.statusText}`);
+                throw new Error(`GitHub API error: ${response.status}`);
             }
 
-            const atual = await response.json();
+            const file = await response.json();
             
-            // Debug
-            console.log('SHA atual:', atual.sha);
+            // Preparar novo conteúdo
+            const content = JSON.stringify(dados, null, 2);
+            const encodedContent = btoa(content);
 
-            // Atualizar o arquivo
-            const updateResponse = await fetch(`https://api.github.com/repos/${CONFIG.GITHUB.owner}/${CONFIG.GITHUB.repo}/contents/${CONFIG.GITHUB.filepath}`, {
+            // Atualizar arquivo
+            await fetch(url, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `token ${CONFIG.GITHUB.token}`,
                     'Accept': 'application/vnd.github.v3+json',
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    message: `Atualização automática do catálogo - ${new Date().toISOString()}`,
-                    content: btoa(unescape(encodeURIComponent(JSON.stringify(novoConteudo, null, 2)))),
-                    sha: atual.sha,
+                    message: 'Atualização automática do catálogo',
+                    content: encodedContent,
+                    sha: file.sha,
                     branch: CONFIG.GITHUB.branch
                 })
             });
 
-            if (!updateResponse.ok) {
-                const error = await updateResponse.json();
-                throw new Error(`Falha ao atualizar: ${error.message}`);
-            }
-
-            console.log('Catálogo atualizado no GitHub com sucesso!');
-            
-            // Salvar localmente também
-            localStorage.setItem('estoqueProdutos', JSON.stringify(produtos));
-            localStorage.setItem('versaoCatalogo', novoConteudo.versao);
-
             return true;
         } catch (error) {
-            console.error('Erro detalhado:', error);
-            
-            // Salvar localmente
-            localStorage.setItem('estoqueProdutos', JSON.stringify(produtos));
-            
-            // Mensagem mais específica
-            let mensagem = 'Erro ao atualizar GitHub:\n';
-            if (error.message.includes('Token')) {
-                mensagem += 'Token inválido ou expirado. Por favor, gere um novo token.';
-            } else {
-                mensagem += error.message;
-            }
-            
-            alert(mensagem);
+            console.error('Erro ao atualizar catálogo:', error);
             return false;
         }
     }
 };
 
+// Exportar para uso global
 window.GitHubAPI = GitHubAPI;
