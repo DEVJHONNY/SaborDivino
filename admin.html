@@ -129,6 +129,41 @@
                     <!-- O conteúdo será preenchido dinamicamente -->
                 </div>
             </div>
+            <div id="produtosSecao" class="secao-admin" style="display: none;">
+                <h2>🛍️ Gerenciar Produtos</h2>
+                <div class="form-group">
+                    <label for="categoriaProduto">Categoria:</label>
+                    <select id="categoriaProduto">
+                        <option value="trufas">Trufas</option>
+                        <option value="mousses">Mousses</option>
+                        <option value="empadas">Empadas</option>
+                    </select>
+                </div>
+                <div id="listaProdutos"></div>
+                <button type="button" onclick="adicionarNovoProduto()" class="add-btn">+ Novo Produto</button>
+                <button type="button" onclick="salvarProdutos()" class="save-btn">💾 Salvar Alterações</button>
+                <button type="button" onclick="confirmarReset()" class="reset-btn">🔄 Resetar para Padrão</button>
+            </div>
+
+            <!-- Adicionar seção de senha -->
+            <div id="senhaSecao" class="secao-admin" style="display: none;">
+                <h2>🔐 Alterar Senha</h2>
+                <form onsubmit="event.preventDefault(); alterarSenha();">
+                    <div class="form-group">
+                        <label for="senhaAtual">Senha Atual:</label>
+                        <input type="password" id="senhaAtual" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="novaSenha">Nova Senha:</label>
+                        <input type="password" id="novaSenha" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmarSenha">Confirmar Nova Senha:</label>
+                        <input type="password" id="confirmarSenha" required>
+                    </div>
+                    <button type="submit">Salvar Nova Senha</button>
+                </form>
+            </div>
         </div>
     </div>
     <script>
@@ -208,14 +243,35 @@
             alert('Estoque atualizado com sucesso!');
         }
         function mostrarSecao(secao) {
-            document.querySelectorAll('.secao-admin').forEach(el => el.style.display = 'none');
-            document.getElementById(secao + 'Secao').style.display = 'block';
-            // Se for a seção de relatórios, carregar dados iniciais
-            if (secao === 'relatorios') {
-                const btnVendas = document.querySelector('.tab-btn');
-                if (btnVendas) {
-                    carregarRelatorio('vendas', btnVendas);
-                }
+            // Verificar se a seção existe
+            const secaoElement = document.getElementById(secao + 'Secao');
+            if (!secaoElement) {
+                console.error(`Seção não encontrada: ${secao}`);
+                return;
+            }
+
+            // Ocultar todas as seções
+            document.querySelectorAll('.secao-admin').forEach(el => {
+                if (el) el.style.display = 'none';
+            });
+
+            // Mostrar seção selecionada
+            secaoElement.style.display = 'block';
+
+            // Inicialização específica por seção
+            switch(secao) {
+                case 'produtos':
+                    carregarProdutos();
+                    break;
+                case 'estoque':
+                    carregarEstoque();
+                    break;
+                case 'relatorios':
+                    const btnVendas = document.querySelector('.tab-btn');
+                    if (btnVendas) {
+                        carregarRelatorio('vendas', btnVendas);
+                    }
+                    break;
             }
         }
         // Carregar estoque do localStorage ao iniciar
