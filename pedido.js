@@ -146,40 +146,33 @@ const PedidoController = {
         return itens;
     },
 
-    async atualizarEstoque(itens) {
+    async atualizarEstoque(itensPedido) {
         try {
-            // Criar backup antes de atualizar
-            await BackupSystem.criarBackup();
-
             // Atualizar estoque local
-            itens.forEach(item => {
-                for (const categoria in produtos) {
-                    const produto = produtos[categoria].find(p => p.id === item.id);
-                    if (produto) {
-                        produto.estoque -= item.quantidade;
-                    }
+            itensPedido.forEach(item => {
+                const produto = produtos[item.categoria].find(p => p.id === item.id);
+                if (produto) {
+                    produto.estoque = Math.max(0, produto.estoque - item.quantidade);
                 }
             });
 
-            // Salvar localmente primeiro
+            // Salvar no localStorage
             localStorage.setItem('estoqueProdutos', JSON.stringify(produtos));
 
-            // Tentar sincronizar com GitHub, mas não falhar se não conseguir
-            try {
-                await GitHubAPI.atualizarCatalogo(produtos);
-            } catch (error) {
-                console.warn('Não foi possível sincronizar com GitHub:', error);
-                // Não propagar o erro, apenas logar
+            // Em modo público, não tentar atualizar GitHub
+            if (CONFIG.USAR_CATALOGO_LOCAL) {
+                return true;
             }
 
-            // Atualizar interface
-            InterfaceController.atualizarInterfaceEstoque();
+            // Tentar atualizar GitHub apenas se houver token
+            if (CONFIG.GITHUB.token) {
+                return await GitHubAPI.atualizarCatalogo(produtos);
+            }
 
             return true;
         } catch (error) {
             console.error('Erro ao atualizar estoque:', error);
-            await BackupSystem.restaurarUltimoBackup();
-            throw error;
+            return false;
         }
     },
 
