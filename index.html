@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sabor Divino - Delícias artesanais feitas com amor. Peça online nossas trufas, mousses e empadas!">
+    <meta name="keywords" content="trufas, mousses, empadas, doces artesanais, delivery de doces, sobremesas">
+    <meta name="author" content="Sabor Divino">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Sabor Divino - Delícias Artesanais">
+    <meta property="og:description" content="Delícias artesanais feitas com amor. Peça online nossas trufas, mousses e empadas!">
+    <meta property="og:image" content="images/logo.png">
+    
+    <title>Pedido - Sabor Divino</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="images/favicon.png">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="sistema/loading.js"></script>  <!-- Adicionar antes dos outros scripts -->
+    <script src="produtos.js"></script>
+    <script src="validacoes.js"></script>
+    <script src="sistema/backup.js"></script>
+    <script src="sistema/github-api.js"></script>
+    <script src="sistema/sync.js"></script>
+    <script src="controllers/estoque-controller.js"></script> <!-- Adicionar esta linha -->
+    <script src="controllers/cliente-controller.js"></script>
+    <script src="controllers/ticket-controller.js"></script>
+    <script src="interface.js"></script>
+    <script src="pedido.js"></script>
+    
+    <!-- Substituir carregamento de config.local.js -->
+    <script>
+        // Configuração padrão para modo público
+        window.CONFIG_LOCAL = {
+            GITHUB_TOKEN: '',
+            IS_PUBLIC: true
+        };
+
+        // Carregar config.js diretamente
+        const script = document.createElement('script');
+        script.src = 'config.js';
+        document.head.appendChild(script);
+    </script>
+    
+    <!-- Adicionar rastreamento (substitua UA-XXXXX-Y pelo seu código do Google Analytics) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-XXXXX-Y"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-XXXXX-Y');
+    </script>
+    
+    <!-- Adicionar verificação de navegador antigo -->
+    <script>
+        if (!/Edge|Chrome|Firefox|Safari/.test(navigator.userAgent)) {
+            alert('Para melhor experiência, use um navegador mais recente como Chrome, Firefox, Edge ou Safari.');
+        }
+    </script>
+
+    <!-- Política de Cookies -->
+    <script>
+        function verificarCookies() {
+            if (!localStorage.getItem('cookiesAceitos')) {
+                Swal.fire({
+                    title: 'Cookies',
+                    text: 'Este site usa cookies para melhorar sua experiência. Ao continuar navegando, você aceita nossa política de cookies.',
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: 'Aceitar',
+                    cancelButtonText: 'Recusar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        localStorage.setItem('cookiesAceitos', 'true');
+                    }
+                });
+            }
+        }
+
+        window.addEventListener('load', verificarCookies);
+    </script>
+
+    <!-- Verificar carregamento de scripts -->
+    <script>
+        window.addEventListener('load', () => {
+            const dependencies = {
+                'SweetAlert2': typeof Swal !== 'undefined',
+                'Config': typeof CONFIG !== 'undefined',
+                'Produtos': typeof produtos !== 'undefined',
+                'Validacoes': typeof Validacoes !== 'undefined',
+                'LoadingSystem': typeof LoadingSystem !== 'undefined',
+                'BackupSystem': typeof BackupSystem !== 'undefined'
+            };
+            console.log('Verificação de dependências:', dependencies);
+            
+            const missing = Object.entries(dependencies)
+                .filter(([key, loaded]) => !loaded)
+                .map(([key]) => key);
+            if (missing.length > 0) {
+                console.error('Dependências faltando:', missing);
+                alert('Erro ao carregar alguns componentes necessários. Por favor, recarregue a página.');
+            }
+        });
+    </script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <img src="images/logo.png" alt="Sabor Divino Logo" class="logo">
+                <div class="header-text">
+                    <h1>Sabor Divino</h1>
+                    <p>Delícias artesanais feitas com amor 💝</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <h2>🍫 Sabor Divino - Faça seu Pedido 🥧</h2>
+        <form id="pedidoForm">
+            <!-- Dados do Cliente -->
+            <div class="form-group">
+                <label for="nome">Nome:</label>
+                <input type="text" id="nome" required>
+                <span class="error" id="nomeError">Por favor, insira seu nome</span>
+            </div>
+
+            <div class="form-group">
+                <label for="telefone">WhatsApp: (opcional)</label>
+                <input type="tel" id="telefone" 
+                       placeholder="DDD + Número" maxlength="11">
+                <span class="error" id="telefoneError">Formato: apenas números</span>
+            </div>
+
+            <div class="form-group">
+                <label for="endereco">Setor:</label>
+                <input type="text" id="endereco" 
+                       placeholder="Ex: Norte, Sul, Centro, etc."
+                       maxlength="50">
+                <span class="error" id="enderecoError">Digite seu setor para facilitar a entrega</span>
+            </div>
+
+            <!-- Itens do Pedido -->
+            <div id="itensPedido">
+                <div class="item-pedido">
+                    <div class="form-group">
+                        <label for="categoria-1">Categoria:</label>
+                        <select class="categoria" id="categoria-1" name="categoria-1" onchange="atualizarProdutos(this)">
+                            <option value="">Selecione uma categoria</option>
+                            <option value="trufas">Trufas</option>
+                            <option value="mousses">Mousses</option>
+                            <option value="empadas">Empadas</option>
+                        </select>
+                        <span class="error" id="categoriaError">Selecione uma categoria</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="produto-1">Produto:</label>
+                        <select class="produto" id="produto-1" name="produto-1" onchange="atualizarPrecoEstoque(this)">
+                            <option value="">Selecione um produto</option>
+                        </select>
+                        <span class="error" id="produtoError">Selecione pelo menos um produto</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="quantidade-1">Quantidade:</label>
+                        <input type="number" 
+                               class="quantidade" 
+                               id="quantidade-1" 
+                               name="quantidade-1" 
+                               min="1" 
+                               value="1" 
+                               onchange="validarQuantidade(this)"
+                               oninput="validarQuantidade(this)">
+                        <span class="estoque-info"></span>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" onclick="adicionarItem()">+ Adicionar Item</button>
+
+            <!-- Forma de Pagamento -->
+            <div class="form-group">
+                <h3>💳 Forma de Pagamento</h3>
+                <div class="pagamento-opcoes">
+                    <label class="pagamento-opcao" for="pix">
+                        <input type="radio" id="pix" name="metodo-pagamento" value="pix" onclick="mostrarOpcoesPix()">
+                        <span class="checkmark">💠 PIX</span>
+                    </label>
+                    <label class="pagamento-opcao" for="dinheiro">
+                        <input type="radio" id="dinheiro" name="metodo-pagamento" value="dinheiro" onclick="ocultarOpcoesPix()">
+                        <span class="checkmark">💵 Dinheiro</span>
+                    </label>
+                    <label class="pagamento-opcao" for="cartao">
+                        <input type="radio" id="cartao" name="metodo-pagamento" value="cartao" onclick="ocultarOpcoesPix()">
+                        <span class="checkmark">💳 Cartão na Entrega</span>
+                    </label>
+                </div>
+
+                <!-- Opções PIX -->
+                <div id="pix-container" style="display: none;">
+                    <button type="button" onclick="mostrarQRCode()" class="pix-button">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' viewBox='0 0 16 16'%3E%3Cpath d='M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-12a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h10a1 0 0 0 1-1V2a1 1 0 0 0-1-1H3z'/%3E%3Cpath d='M4 3h8a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z'/%3E%3C/svg%3E" alt="QR Code">
+                        QR Code PIX
+                    </button>
+                    <button type="button" onclick="copiarChavePix()" class="pix-button">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' viewBox='0 0 16 16'%3E%3Cpath d='M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 0 0 1 1 1V14a1 0 0 1-1 1H3a1 0 0 1-1-1V3.5a1 0 0 1 1-1h1v-1z'/%3E%3Cpath d='M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z'/%3E%3C/svg%3E" alt="Copiar">
+                        Copiar Chave PIX
+                    </button>
+                    <div id="qr-code" class="qr-code-container" style="display: none;">
+                        <img src="" alt="QR Code PIX" id="qr-code-image">
+                    </div>
+                    <div class="pix-info">
+                        <p><strong>Banco:</strong> <span id="pix-banco"></span></p>
+                        <p><strong>Nome:</strong> <span id="pix-nome"></span></p>
+                        <p><strong>Chave:</strong> <span id="pix-chave"></span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total e Envio -->
+            <div class="total" id="totalPedido">
+                Total: R$ 0,00
+            </div>
+            
+            <button type="button" class="enviar" id="btnEnviarPedido">
+                Enviar Pedido pelo WhatsApp
+            </button>
+        </form>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>© 2024 Sabor Divino - Todos os direitos reservados</p>
+            <a href="admin.html" class="admin-link">Área Administrativa</a>
+        </div>
+    </footer>
+
+    <script>
+        // Garantir que o botão de envio seja configurado após o DOM carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM carregado, configurando botão...'); // Debug
+            
+            const btnEnviar = document.getElementById('btnEnviarPedido');
+            console.log('Botão encontrado:', btnEnviar); // Debug
+            
+            if (btnEnviar) {
+                btnEnviar.addEventListener('click', (e) => {
+                    console.log('Botão clicado!'); // Debug
+                    e.preventDefault();
+                    PedidoController.enviarPedido();
+                });
+            }
+        });
+
+        // Modificar a função de sincronização para não ser automática
+        async function sincronizarProdutos() {
+            try {
+                const estoqueLocal = localStorage.getItem('estoqueProdutos');
+                if (estoqueLocal) {
+                    Object.assign(produtos, JSON.parse(estoqueLocal));
+                    console.log('Produtos carregados:', produtos);
+                    InterfaceController.atualizarInterfaceEstoque();
+                }
+            } catch (error) {
+                console.error('Erro ao carregar produtos:', error);
+            }
+        }
+
+        // Inicialização - remover sincronização automática
+        document.addEventListener('DOMContentLoaded', () => {
+            sincronizarProdutos(); // Apenas carregar produtos locais
+        });
+        
+        // ...rest of existing code...
+    </script>
+</body>
+</html>

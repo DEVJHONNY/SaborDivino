@@ -1,0 +1,447 @@
+:root {
+    --primary-color: #ff758c;
+    --secondary-color: #ffd3b6;
+    --accent-color: #ffaaa5;
+    --background-color: #fff5f5;
+    --text-color: #4a4a4a;
+    --text-light: #666;
+    --shadow: 0 8px 30px rgba(0,0,0,0.12);
+    --border-radius: 20px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: auto;
+    background: white;
+    padding: 3rem; /* Aumentado de 2rem para 3rem */
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    animation: slideUp 0.5s ease;
+    margin-bottom: 2rem; /* Adicionar espaço entre containers */
+}
+
+h2 {
+    color: var(--primary-color);
+    margin-bottom: 2rem;
+    text-align: center;
+    font-size: 2.2rem;
+}
+
+form {
+    text-align: left;
+}
+
+.form-group {
+    margin-bottom: 2.5rem; /* Aumentado de 1.5rem para 2.5rem */
+    animation: fadeIn 0.5s ease;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+input, select {
+    width: 100%;
+    padding: 0.8rem;
+    border: 2px solid var(--secondary-color);
+    border-radius: 15px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(255,117,140,0.2);
+}
+
+button {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 1.2rem 2.5rem; /* Aumentado de 1rem 2rem para 1.2rem 2.5rem */
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    margin: 1rem 0;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+    background: var(--accent-color);
+}
+
+.item-pedido {
+    background: white;
+    border: 2px solid var(--secondary-color);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: var(--border-radius);
+    position: relative;
+    animation: slideIn 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.item-pedido .form-group {
+    margin-bottom: 1rem;
+}
+
+.item-pedido .estoque-info {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-top: 0.5rem;
+}
+
+.total {
+    background: var(--secondary-color);
+    padding: 2rem; /* Aumentado de 1.5rem para 2rem */
+    border-radius: var(--border-radius);
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 3rem 0; /* Aumentado de 2rem para 3rem */
+    text-align: center;
+    color: var(--text-color);
+}
+
+.estoque-info {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.error {
+    color: #dc3545;
+    font-size: 0.875em;
+    margin-top: 4px;
+    display: none;
+}
+
+.error.visible {
+    display: block;
+}
+
+button.enviar {
+    background: var(--accent-color);
+    margin-top: 1rem;
+}
+
+button:not(.enviar) {
+    background: var(--text-light);
+    width: auto;
+}
+
+.admin-link {
+    display: inline-block;
+    margin-top: 3rem; /* Aumentado de 2rem para 3rem */
+    color: var(--text-light);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+    padding: 1rem 0;
+}
+
+.admin-link:hover {
+    color: var(--primary-color);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Estilos específicos para área administrativa */
+.admin-nav {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.nav-btn {
+    background: var(--secondary-color);
+    color: var(--text-color);
+    padding: 0.8rem 1.5rem;
+    flex: 1;
+    min-width: 150px;
+}
+
+.nav-btn:hover {
+    background: var(--accent-color);
+    color: white;
+}
+
+#adminPanel h3 {
+    color: var(--primary-color);
+    margin: 1.5rem 0;
+}
+
+.produto-item {
+    background: white;
+    border: 2px solid var(--secondary-color);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    border-radius: var(--border-radius);
+    position: relative;
+}
+
+.remove-btn {
+    background: var(--primary-color);
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    width: auto;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+.button-group {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.reset-btn {
+    background: var(--text-light);
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 2rem; /* Manter um bom espaçamento mesmo em telas menores */
+        margin: 1rem;
+    }
+
+    .admin-nav {
+        flex-direction: column;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    .form-group {
+        margin-bottom: 2rem;
+    }
+
+    .item-pedido {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+}
+
+/* Estilos para os elementos do PIX */
+.pagamento-opcoes {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem; /* Aumentado de 1rem para 1.5rem */
+    margin: 2rem 0; /* Aumentado de 1rem para 2rem */
+}
+
+.pagamento-opcao {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    padding: 1.2rem; /* Aumentado de 0.8rem para 1.2rem */
+    border: 2px solid var(--secondary-color);
+    border-radius: var(--border-radius);
+    transition: all 0.3s ease;
+    margin-bottom: 0.5rem;
+}
+
+.pagamento-opcao:hover {
+    border-color: var(--primary-color);
+    background: var(--background-color);
+}
+
+.pagamento-opcao input[type="radio"] {
+    width: auto;
+    margin: 0;
+}
+
+.pix-options {
+    background: var(--background-color);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    margin-top: 1rem;
+    animation: fadeIn 0.3s ease;
+}
+
+.pix-method-select {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.pix-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: white;
+    color: var(--text-color);
+    border: 2px solid var(--secondary-color);
+    padding: 0.8rem 1.5rem;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.pix-button:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.pix-button img {
+    width: 20px;
+    height: 20px;
+}
+
+.qr-code-container {
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0;
+    padding: 1rem;
+    background: white;
+    border-radius: var(--border-radius);
+}
+
+.qr-code-container img {
+    max-width: 200px;
+    height: auto;
+}
+
+.pix-info {
+    background: white;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    margin-top: 1rem;
+}
+
+.pix-info p {
+    margin: 0.5rem 0;
+}
+
+/* Ajustar espaçamento do cabeçalho */
+header {
+    margin-bottom: 3rem; /* Adicionar espaço após o header */
+}
+
+header h1 {
+    margin-bottom: 1rem;
+}
+
+/* Ajustar espaçamento do rodapé */
+footer {
+    margin-top: 4rem; /* Aumentar espaço antes do footer */
+    padding: 2rem 0;
+}
+
+/* Adicionar espaço após o botão de adicionar item */
+button[onclick="adicionarItem()"] {
+    background: var(--accent-color);
+    width: 100%;
+    margin: 1rem 0 2rem 0;
+    padding: 1rem;
+    font-weight: 600;
+    border-radius: var(--border-radius);
+    transition: all 0.3s ease;
+}
+
+button[onclick="adicionarItem()"]:hover {
+    background: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.remove-item {
+    background-color: #ff4444;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+}
+
+.remove-item:hover {
+    background-color: #cc0000;
+    transform: scale(1.05);
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 1rem 0;
+}
+
+.logo {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+}
+
+.header-text {
+    flex: 1;
+}
+
+.header-text h1 {
+    margin: 0;
+    color: var(--primary-color);
+}
+
+.header-text p {
+    margin: 5px 0 0;
+    color: var(--text-color);
+}
+
+@media (max-width: 480px) {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .logo {
+        width: 60px;
+        height: 60px;
+    }
+}

@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Sabor Divino</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Carregar scripts na ordem correta -->
+    <script src="sistema/loading.js"></script> <!-- Adicionar antes dos outros scripts -->
+    
+    <!-- Remover carregamento direto do config.local.js -->
+    <!-- <script src="config.local.js"></script> -->
+    
+    <!-- Primeiro carregar produtos -->
+    <script src="produtos.js"></script>
+    
+    <!-- Depois carregar os outros scripts -->
+    <script>
+        // Configuração padrão para modo público
+        window.CONFIG_LOCAL = {
+            GITHUB_TOKEN: '',
+            IS_PUBLIC: true
+        };
+
+        async function loadScripts() {
+            const scripts = [
+                'config.js',
+                'sistema/backup.js',
+                'sistema/github-api.js',
+                'sistema/sync.js',
+                'sistema/relatorios.js',
+                'controllers/ticket-controller.js',
+                'controllers/cliente-controller.js'
+            ];
+
+            for (const src of scripts) {
+                await new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = src;
+                    script.onload = () => {
+                        console.log(`Carregado: ${src}`);
+                        resolve();
+                    };
+                    script.onerror = reject;
+                    document.head.appendChild(script);
+                });
+            }
+        }
+
+        // Inicializar após carregar scripts
+        loadScripts().then(() => {
+            console.log('Scripts carregados com sucesso');
+            // Verificar se produtos está definido
+            if (typeof window.produtos === 'undefined') {
+                throw new Error('Objeto produtos não definido');
+            }
+            if (typeof produtos === 'undefined') {
+                console.error('Erro: objeto produtos não definido');
+                alert('Erro ao carregar produtos. Por favor, recarregue a página.');
+            } else {
+                console.log('Scripts carregados com sucesso');
+                // Inicializar interface se necessário
+                if (document.getElementById('adminPanel').style.display !== 'none') {
+                    carregarEstoque();
+                }
+            }
+        }).catch(error => {
+            console.error('Erro ao carregar scripts:', error);
+            alert('Erro ao carregar scripts. Por favor, recarregue a página.');
+        });
+    </script>
+    
+    <!-- Remover tags script duplicadas -->
+    <!-- <script src="config.js"></script> -->
+    <!-- <script src="sistema/backup.js"></script> -->
+    <!-- etc... -->
+</head>
+<body>
+    <div class="container">
+        <div id="loginForm">
+            <h2>🔐 Área Administrativa</h2>
+            <form id="formLogin" method="post" onsubmit="event.preventDefault(); login();">
+                <div class="form-group">
+                    <label for="senha-login">Senha:</label>
+                    <input type="password" id="senha-login" name="senha" placeholder="Digite a senha" required>
+                    <button type="submit">Entrar</button>
+                </div>
+            </form>
+        </div>
+        <div id="adminPanel" style="display: none;">
+            <nav class="admin-nav">
+                <button onclick="mostrarSecao('estoque')" class="nav-btn">Gerenciar Estoque</button>
+                <button onclick="mostrarSecao('produtos')" class="nav-btn">Gerenciar Produtos</button>
+                <button onclick="mostrarSecao('senha')" class="nav-btn">Alterar Senha</button>
+                <button onclick="mostrarSecao('relatorios')" class="nav-btn">📊 Relatórios</button>
+            </nav>
+            <div id="estoqueSecao" class="secao-admin">
+                <h2>📦 Gerenciar Estoque</h2>
+                <button type="button" onclick="sincronizarAgora()" class="sync-btn">🔄 Sincronizar com GitHub</button>
+                <div id="estoqueList"></div>
+                <button type="button" onclick="salvarEstoque()">Salvar Alterações</button>
+            </div>
+            <div id="relatoriosSecao" class="secao-admin" style="display: none;">
+                <h2>📊 Relatórios</h2>
+                <div class="relatorios-tabs">
+                    <button onclick="carregarRelatorio('vendas', this)" class="tab-btn active">Registro de Vendas</button>
+                    <button onclick="carregarRelatorio('produtos', this)" class="tab-btn">Vendas por Produto</button>
+                    <button onclick="carregarRelatorio('periodos', this)" class="tab-btn">Vendas por Período</button>
+                    <button onclick="carregarRelatorio('clientes', this)" class="tab-btn">Análise de Clientes</button>
+                </div>
+                <div class="relatorio-controles">
+                    <select id="filtroStatus">
+                        <option value="todos">Todos os Status</option>
+                        <option value="pendente">Pendentes</option>
+                        <option value="concluido">Concluídos</option>
+                        <option value="cancelado">Cancelados</option>
+                    </select>
+                    <select id="filtroPeriodo">
+                        <option value="hoje">Hoje</option>
+                        <option value="semana">Esta Semana</option>
+                        <option value="mes">Este Mês</option>
+                        <option value="todos">Todo Período</option>
+                    </select>
+                    <button onclick="exportarRelatorioAtual()" class="export-btn">📥 Exportar CSV</button>
+                </div>
+                <div id="relatorioContent" class="relatorio-container">
+                    <!-- O conteúdo será preenchido dinamicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let tentativasLogin = 0;
+        let tempoBloqueioPag = 0;
+        async function login() {
+            const senha = document.getElementById('senha-login').value.trim(); // Remover espaços
+            // Verificar bloqueio
+            if (tempoBloqueioPag > Date.now()) {
+                const minutosRestantes = Math.ceil((tempoBloqueioPag - Date.now()) / 60000);
+                alert(`Muitas tentativas incorretas. Tente novamente em ${minutosRestantes} minutos.`);
+                return;
+            }
+            try {
+                const senhaHash = await criarHash(senha);
+                console.log('Hash gerado:', senhaHash);
+                console.log('Hash esperado:', CONFIG.SENHA_HASH);
+                console.log('São iguais?', senhaHash === CONFIG.SENHA_HASH);
+                // Comparação direta dos hashes
+                if (senhaHash.toLowerCase() === CONFIG.SENHA_HASH.toLowerCase()) {
+                    console.log('Login bem sucedido!');
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.getElementById('adminPanel').style.display = 'block';
+                    carregarEstoque();
+                    carregarProdutos();
+                    tentativasLogin = 0;
+                    return;
+                }
+                // Se chegou aqui, a senha está incorreta
+                tentativasLogin++;
+                console.log('Senha incorreta');
+                if (tentativasLogin >= CONFIG.MAX_TENTATIVAS) {
+                    tempoBloqueioPag = Date.now() + (CONFIG.TEMPO_BLOQUEIO * 60 * 1000);
+                    alert(`Muitas tentativas incorretas. Sistema bloqueado por ${CONFIG.TEMPO_BLOQUEIO} minutos.`);
+                } else {
+                    alert(`Senha incorreta! Tentativas restantes: ${CONFIG.MAX_TENTATIVAS - tentativasLogin}`);
+                }
+            } catch (error) {
+                console.error('Erro ao processar login:', error);
+                alert('Erro ao processar login. Tente novamente.');
+            }
+        }
+        function carregarEstoque() {
+            const estoqueList = document.getElementById('estoqueList');
+            if (!estoqueList) {
+                console.error('Elemento estoqueList não encontrado');
+                return;
+            }
+            estoqueList.innerHTML = '';
+            Object.entries(produtos).forEach(([categoria, items]) => {
+                const categoriaDiv = document.createElement('div');
+                categoriaDiv.innerHTML = `<h3>${categoria.toUpperCase()}</h3>`;
+                items.forEach((produto, index) => {
+                    const inputId = `estoque-${categoria}-${produto.id}`;
+                    categoriaDiv.innerHTML += `
+                        <div class="form-group">
+                            <label for="${inputId}">${produto.nome}:</label>
+                            <input type="number" 
+                                   id="${inputId}" 
+                                   value="${produto.estoque}" 
+                                   min="0" 
+                                   onchange="atualizarEstoque('${categoria}', ${produto.id}, this.value)">
+                        </div>
+                    `;
+                });
+                estoqueList.appendChild(categoriaDiv);
+            });
+        }
+        function salvarEstoque() {
+            Object.entries(produtos).forEach(([categoria, items]) => {
+                items.forEach(produto => {
+                    const novoEstoque = parseInt(document.getElementById(`estoque-${categoria}-${produto.id}`).value);
+                    produto.estoque = novoEstoque;
+                });
+            });
+            localStorage.setItem('estoqueProdutos', JSON.stringify(produtos));
+            alert('Estoque atualizado com sucesso!');
+        }
+        function mostrarSecao(secao) {
+            document.querySelectorAll('.secao-admin').forEach(el => el.style.display = 'none');
+            document.getElementById(secao + 'Secao').style.display = 'block';
+            // Se for a seção de relatórios, carregar dados iniciais
+            if (secao === 'relatorios') {
+                const btnVendas = document.querySelector('.tab-btn');
+                if (btnVendas) {
+                    carregarRelatorio('vendas', btnVendas);
+                }
+            }
+        }
+        // Carregar estoque do localStorage ao iniciar
+        const estoqueLocal = localStorage.getItem('estoqueProdutos');
+        if (estoqueLocal) {
+            Object.assign(produtos, JSON.parse(estoqueLocal));
+        }
+        let relatorioAtual = null;
+        let tipoRelatorioAtual = 'vendas';
+        async function carregarRelatorio(tipo, elemento) {
+            try {
+                tipoRelatorioAtual = tipo;
+                const relatorio = await RelatoriosController.gerarRelatorioCompleto();
+                relatorioAtual = relatorio[tipo];
+                const container = document.getElementById('relatorioContent');
+                container.innerHTML = '';
+                switch(tipo) {
+                    case 'vendas':
+                        renderizarTabelaVendas(relatorio.vendas);
+                        break;
+                    case 'produtos':
+                        renderizarTabelaProdutos(relatorio.produtos);
+                        break;
+                    case 'periodos':
+                        renderizarTabelaPeriodos(relatorio.periodos);
+                        break;
+                    case 'clientes':
+                        renderizarTabelaClientes(relatorio.clientes);
+                        break;
+                }
+                // Atualizar botões ativos
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                if (elemento) {
+                    elemento.classList.add('active');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar relatório:', error);
+                alert('Erro ao carregar relatório. Por favor, tente novamente.');
+            }
+        }
+        function renderizarTabelaVendas(vendas) {
+            const table = document.createElement('table');
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Cliente</th>
+                        <th>Produtos</th>
+                        <th>Valor Total</th>
+                        <th>Forma Pagamento</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${vendas.map(venda => {
+                        // Formatar lista de produtos corretamente
+                        const produtosFormatados = Array.isArray(venda.produtos) ? 
+                            venda.produtos.map(p => `${p.quantidade}x ${p.nome} (R$ ${(p.quantidade * p.preco).toFixed(2)})`).join('<br>') : 
+                            'Sem produtos';
+                        return `
+                            <tr>
+                                <td>${venda.data}</td>
+                                <td>${venda.cliente}</td>
+                                <td>${produtosFormatados}</td>
+                                <td>R$ ${typeof venda.valorTotal === 'number' ? 
+                                        venda.valorTotal.toFixed(2).replace('.', ',') : 
+                                        Number(venda.valorTotal).toFixed(2).replace('.', ',')}</td>
+                                <td>${venda.formaPagamento.toUpperCase()}</td>
+                                <td>${venda.status.toUpperCase()}</td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            `;
+            document.getElementById('relatorioContent').appendChild(table);
+        }
+        function renderizarTabelaProdutos(produtos) {
+            const table = document.createElement('table');
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Quantidade Vendida</th>
+                        <th>Valor Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${produtos.map(produto => `
+                        <tr>
+                            <td>${produto.produto}</td>
+                            <td>${produto.quantidadeVendida}</td>
+                            <td>R$ ${produto.valorTotal.replace('.', ',')}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+            document.getElementById('relatorioContent').appendChild(table);
+        }
+        function renderizarTabelaPeriodos(periodos) {
+            const table = document.createElement('table');
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Período</th>
+                        <th>Quantidade de Vendas</th>
+                        <th>Valor Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${periodos.map(periodo => `
+                        <tr>
+                            <td>${periodo.periodo}</td>
+                            <td>${periodo.quantidadeVendas}</td>
+                            <td>R$ ${periodo.valorTotal.replace('.', ',')}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+            document.getElementById('relatorioContent').appendChild(table);
+        }
+        function renderizarTabelaClientes(clientes) {
+            const table = document.createElement('table');
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Total de Compras</th>
+                        <th>Valor Total</th>
+                        <th>Produto Favorito</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${clientes.map(cliente => `
+                        <tr>
+                            <td>${cliente.cliente}</td>
+                            <td>${cliente.totalCompras}</td>
+                            <td>R$ ${cliente.valorTotal.replace('.', ',')}</td>
+                            <td>${cliente.produtoFavorito}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+            document.getElementById('relatorioContent').appendChild(table);
+        }
+        function exportarRelatorioAtual() {
+            if (!relatorioAtual) return;
+            RelatoriosController.exportarCSV(relatorioAtual, tipoRelatorioAtual);
+        }
+        function carregarProdutos() {
+            const listaProdutos = document.getElementById('listaProdutos');
+            if (!listaProdutos) return; // Evitar erro se o elemento não existir
+            const categoria = document.getElementById('categoriaProduto')?.value;
+            if (!categoria) return;
+            listaProdutos.innerHTML = '';
+            if (produtos[categoria]) {
+                produtos[categoria].forEach((produto, index) => {
+                    const nomeId = `produto-nome-${categoria}-${produto.id}`;
+                    const precoId = `produto-preco-${categoria}-${produto.id}`;
+                    listaProdutos.innerHTML += `
+                        <div class="produto-item">
+                            <div class="form-group">
+                                <label for="${nomeId}">Nome do Produto:</label>
+                                <input type="text" 
+                                       id="${nomeId}"
+                                       name="${nomeId}"
+                                       value="${produto.nome}" 
+                                       onchange="atualizarProduto(${index}, 'nome', this.value)">
+                            </div>
+                            <div class="form-group">
+                                <label for="${precoId}">Preço (R$):</label>
+                                <input type="number" 
+                                       id="${precoId}"
+                                       name="${precoId}"
+                                       step="0.50" 
+                                       value="${produto.preco}" 
+                                       onchange="atualizarProduto(${index}, 'preco', this.value)">
+                            </div>
+                            <button type="button" onclick="removerProduto(${index})" class="remove-btn">Remover</button>
+                        </div>
+                    `;
+                });
+            }
+        }
+        function removerProduto(index) {
+            if (confirm('Tem certeza que deseja remover este produto?')) {
+                const categoria = document.getElementById('categoriaProduto').value;
+                produtos[categoria].splice(index, 1);
+                localStorage.setItem('estoqueProdutos', JSON.stringify(produtos));
+                carregarProdutos();
+                carregarEstoque();
+            }
+        }
+        function adicionarNovoProduto() {
+            const categoria = document.getElementById('categoriaProduto').value;
+            const novoProduto = {
+                id: Date.now(),
+                nome: "Novo Produto",
+                preco: 0.00,
+                estoque: 0
+            };
+            if (!produtos[categoria]) {
+                produtos[categoria] = [];
+            }
+            produtos[categoria].push(novoProduto);
+            localStorage.setItem('estoqueProdutos', JSON.stringify(produtos));
+            carregarProdutos();
+            carregarEstoque();
+        }
+        function atualizarProduto(index, campo, valor) {
+            const categoria = document.getElementById('categoriaProduto').value;
+            if (campo === 'preco') {
+                valor = parseFloat(valor) || 0;
+            }
+            produtos[categoria][index][campo] = valor;
+        }
+        function salvarProdutos() {
+            const categoria = document.getElementById('categoriaProduto').value;
+            const items = Array.from(document.querySelectorAll('.produto-item')).map((item, index) => ({
+                id: produtos[categoria][index]?.id || Date.now() + index,
+                nome: item.querySelector('input[type="text"]').value,
+                preco: parseFloat(item.querySelector('input[type="number"]').value) || 0,
+                estoque: produtos[categoria][index]?.estoque || 0
+            }));
+            produtos[categoria] = items;
+            localStorage.setItem('estoqueProdutos', JSON.stringify(produtos));
+            carregarProdutos();
+            carregarEstoque();
+            alert('Produtos atualizados com sucesso!');
+        }
+        function confirmarReset() {
+            if (confirm('Tem certeza que deseja resetar todos os produtos para o padrão? Esta ação não pode ser desfeita!')) {
+                // Usar produtos do catálogo oficial
+                produtos = {
+                    trufas: [
+                        { id: 1, nome: 'Trufa de Brigadeiro', preco: 4.50, estoque: 0 },
+                        { id: 2, nome: 'Trufa de Ninho', preco: 4.50, estoque: 0 },
+                        { id: 3, nome: 'Trufa de Ovomaltine', preco: 4.50, estoque: 0 },
+                        { id: 4, nome: 'Trufa de Coco', preco: 4.50, estoque: 2 },
+                        { id: 5, nome: 'Trufa de Amendoim', preco: 4.50, estoque: 4 },
+                        { id: 6, nome: 'Trufa de Ferreiro', preco: 4.50, estoque: 3 },
+                        { id: 7, nome: 'Trufa de Castanha', preco: 4.50, estoque: 3 }
+                    ],
+                    mousses: [
+                        { id: 9, nome: 'Mousse de Limão', preco: 3.50, estoque: 3 },
+                        { id: 10, nome: 'Mousse de Maracujá', preco: 3.50, estoque: 3 }
+                    ],
+                    empadas: [
+                        { id: 11, nome: 'Empada de Frango', preco: 4.50, estoque: 0 },
+                        { id: 12, nome: 'Empada de Calabresa', preco: 4.50, estoque: 0 }
+                    ]
+                };
+                localStorage.setItem('estoqueProdutos', JSON.stringify(produtos));
+                localStorage.setItem('versaoCatalogo', CONFIG.VERSAO_CATALOGO);
+                carregarProdutos();
+                carregarEstoque();
+                alert('Produtos resetados com sucesso!');
+            }
+        }
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            const estoqueLocal = localStorage.getItem('estoqueProdutos');
+            if (estoqueLocal) {
+                Object.assign(produtos, JSON.parse(estoqueLocal));
+            }
+            // Adicionar event listeners para filtros
+            document.getElementById('filtroStatus')?.addEventListener('change', () => {
+                carregarRelatorio(tipoRelatorioAtual, document.querySelector('.tab-btn.active'));
+            });
+            document.getElementById('filtroPeriodo')?.addEventListener('change', () => {
+                carregarRelatorio(tipoRelatorioAtual, document.querySelector('.tab-btn.active'));
+            });
+            // Adicionar listener para mudança de categoria
+            const categoriaProduto = document.getElementById('categoriaProduto');
+            if (categoriaProduto) {
+                categoriaProduto.addEventListener('change', () => {
+                    carregarProdutos();
+                });
+            }
+        });
+        // Adicionar função atualizarEstoque antes das exportações
+        function atualizarEstoque(categoria, produtoId, novoValor) {
+            const produto = produtos[categoria].find(p => p.id === produtoId);
+            if (produto) {
+                produto.estoque = parseInt(novoValor) || 0;
+                console.log(`Estoque atualizado: ${produto.nome} - Novo estoque: ${produto.estoque}`);
+            }
+        }
+        // Exportar funções para o escopo global
+        window.atualizarEstoque = atualizarEstoque; // Adicionar esta linha
+        window.removerProduto = removerProduto;
+        window.adicionarNovoProduto = adicionarNovoProduto;
+        window.atualizarProduto = atualizarProduto;
+        window.salvarProdutos = salvarProdutos;
+        window.confirmarReset = confirmarReset;
+
+        async function sincronizarAgora() {
+            try {
+                LoadingSystem.show('Sincronizando com GitHub...');
+                // Forçar limpeza do cache local
+                localStorage.removeItem('ultima_sincronizacao');
+                localStorage.removeItem('versaoCatalogo');
+                await SyncSystem.verificarAtualizacoes();
+                // Recarregar dados
+                const estoqueLocal = localStorage.getItem('estoqueProdutos');
+                if (estoqueLocal) {
+                    Object.assign(produtos, JSON.parse(estoqueLocal));
+                }
+                // Atualizar interface
+                carregarEstoque();
+                LoadingSystem.hide();
+                alert('Sincronização concluída!');
+            } catch (error) {
+                console.error('Erro na sincronização:', error);
+                LoadingSystem.hide();
+                alert('Erro ao sincronizar. Verifique o console.');
+            }
+        }
+        window.sincronizarAgora = sincronizarAgora;
+    </script>
+    <style>
+        .error-hint {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 4px;
+        }
+        form {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+    </style>
+</body>
+</html>
