@@ -1,5 +1,5 @@
 {
-    "versao": "2024.02.26.4",
+    "versao": "2024.02.27.1",
     "produtos": {
         "trufas": [
             { "id": 1, "nome": "Trufa de Brigadeiro", "preco": 4.50, "estoque": 0 },
