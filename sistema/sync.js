@@ -1,21 +1,40 @@
 const SyncSystem = {
     async verificarAtualizacoes() {
         try {
-            // Forçar sincronização a cada verificação
-            const response = await fetch(CONFIG.CATALOGO_URL);
+            // Forçar busca do GitHub ignorando cache
+            const response = await fetch(CONFIG.CATALOGO_URL + '?t=' + new Date().getTime(), {
+                cache: 'no-store',
+                headers: {
+                    'Cache-Control': 'no-cache'
+                }
+            });
+
             if (!response.ok) {
                 throw new Error('Erro ao buscar catálogo');
             }
 
             const dadosServidor = await response.json();
             
-            // Sempre atualizar dados locais com dados do servidor
-            localStorage.setItem('estoqueProdutos', JSON.stringify(dadosServidor.produtos));
-            localStorage.setItem('historico_tickets', JSON.stringify(dadosServidor.tickets || []));
-            localStorage.setItem('ultima_sincronizacao', new Date().toISOString());
-            
-            // Atualizar objeto produtos global
-            Object.assign(window.produtos, dadosServidor.produtos);
+            // Atualizar dados locais com dados do servidor
+            if (dadosServidor.produtos) {
+                // Atualizar produtos em memória primeiro
+                window.produtos = dadosServidor.produtos;
+                
+                // Depois atualizar localStorage
+                localStorage.setItem('estoqueProdutos', JSON.stringify(dadosServidor.produtos));
+                localStorage.setItem('versaoCatalogo', dadosServidor.versao);
+                localStorage.setItem('ultima_sincronizacao', new Date().toISOString());
+                
+                // Atualizar interface se estiver visível
+                if (typeof carregarEstoque === 'function') {
+                    carregarEstoque();
+                }
+                
+                // Disparar evento de atualização
+                window.dispatchEvent(new CustomEvent('produtosAtualizados', {
+                    detail: dadosServidor.produtos
+                }));
+            }
             
             console.log('Sincronização concluída:', dadosServidor);
             return true;
@@ -93,21 +112,38 @@ const SyncSystem = {
         }
     },
 
-    // Adicionar sincronização automática
+    // Iniciar sincronização automática mais frequente
     iniciarSincronizacaoAutomatica() {
-        // Sincronizar ao carregar
+        // Primeira sincronização imediata
         this.verificarAtualizacoes();
 
-        // Sincronizar a cada 30 segundos
+        // Sincronizar a cada 15 segundos
         setInterval(() => {
             this.verificarAtualizacoes();
-        }, 30 * 1000);
+        }, 15 * 1000);
+
+        // Sincronizar quando a aba voltar a ficar ativa
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                this.verificarAtualizacoes();
+            }
+        });
+
+        // Sincronizar quando houver conexão de volta
+        window.addEventListener('online', () => {
+            this.verificarAtualizacoes();
+        });
     }
 };
 
-// Iniciar sincronização automática
-document.addEventListener('DOMContentLoaded', () => {
+// Garantir que a sincronização comece assim que possível
+window.addEventListener('load', () => {
     SyncSystem.iniciarSincronizacaoAutomatica();
+});
+
+// Forçar sincronização quando a página carregar
+document.addEventListener('DOMContentLoaded', () => {
+    SyncSystem.verificarAtualizacoes();
 });
 
 // Exportar para uso global
