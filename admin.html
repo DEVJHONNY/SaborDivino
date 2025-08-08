@@ -7,20 +7,6 @@
     <title>Admin - Sabor Divino</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <style>
-        /* Estilos simples podem continuar aqui ou ir para styles.css */
-        .error-hint {
-            font-size: 0.8em;
-            color: #666;
-            margin-top: 4px;
-        }
-
-        form {
-            width: 100%;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-    </style>
 </head>
 
 <body>
@@ -46,37 +32,57 @@
 
             <div id="estoqueSecao" class="secao-admin">
                 <h2>📦 Gerenciar Estoque</h2>
-                <button type="button" id="btnSincronizar" class="sync-btn">🔄 Sincronizar com GitHub</button>
                 <div id="estoqueList"></div>
-                <button type="button" id="btnSalvarEstoque">Salvar Alterações</button>
+                <button type="button" id="btnSalvarEstoque">Salvar Alterações no Estoque</button>
             </div>
 
             <div id="produtosSecao" class="secao-admin" style="display: none;">
                 <h2>🛍️ Gerenciar Produtos</h2>
+                <div class="form-group">
+                    <label for="categoriaProduto">Filtrar por Categoria:</label>
+                    <select id="categoriaProduto">
+                        <option value="trufas">Trufas</option>
+                        <option value="mousses">Mousses</option>
+                        <option value="empadas">Empadas</option>
+                    </select>
+                </div>
+                <div id="listaProdutosAdmin"></div>
+                <div class="button-group">
+                    <button type="button" id="btnAdicionarProduto" class="add-btn">+ Novo Produto</button>
+                    <button type="button" id="btnSalvarProdutos" class="save-btn">💾 Salvar Alterações nos
+                        Produtos</button>
+                </div>
             </div>
 
             <div id="relatoriosSecao" class="secao-admin" style="display: none;">
                 <h2>📊 Relatórios</h2>
+                <p>Seção de relatórios em construção.</p>
             </div>
 
             <div id="senhaSecao" class="secao-admin" style="display: none;">
                 <h2>🔐 Alterar Senha</h2>
+                <form id="formAlterarSenha">
+                    <div class="form-group">
+                        <label for="senhaAtual">Senha Atual:</label>
+                        <input type="password" id="senhaAtual" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="novaSenha">Nova Senha:</label>
+                        <input type="password" id="novaSenha" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmarSenha">Confirmar Nova Senha:</label>
+                        <input type="password" id="confirmarSenha" required>
+                    </div>
+                    <button type="submit">Salvar Nova Senha</button>
+                </form>
             </div>
         </div>
     </div>
 
     <script src="produtos.js" defer></script>
     <script src="config.js" defer></script>
-    <script src="sistema/loading.js" defer></script>
-    <script src="sistema/backup.js" defer></script>
-    <script src="sistema/github-api.js" defer></script>
-    <script src="sistema/sync.js" defer></script>
-    <script src="sistema/relatorios.js" defer></script>
-    <script src="controllers/ticket-controller.js" defer></script>
-    <script src="controllers/cliente-controller.js" defer></script>
-
     <script src="admin.js" defer></script>
-
 </body>
 
 </html>
