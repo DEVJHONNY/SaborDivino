@@ -1,7 +1,4 @@
 const SyncSystem = {
-    /**
-     * Verifica se há uma nova versão do catálogo no servidor e atualiza os dados locais.
-     */
     async verificarAtualizacoes() {
         if (typeof CONFIG === 'undefined') {
             console.error('SyncSystem: CONFIG não definido. Sincronização abortada.');
@@ -10,7 +7,6 @@ const SyncSystem = {
 
         try {
             const url = `${CONFIG.CATALOGO_URL}?t=${new Date().getTime()}`;
-            // *** CORREÇÃO DEFINITIVA DO CORS ***
             // Fetch simplificado, sem as opções de 'cache' que causavam o bloqueio.
             const response = await fetch(url);
 
@@ -39,11 +35,7 @@ const SyncSystem = {
         }
     },
 
-    /**
-     * Inicia o processo de sincronização automática.
-     */
     iniciarSincronizacaoAutomatica() {
-        // Esta função é chamada pelo main.js uma única vez.
         console.log("Serviço de sincronização automática iniciado.");
         this.verificarAtualizacoes();
 
@@ -59,5 +51,4 @@ const SyncSystem = {
     }
 };
 
-// Exporta o objeto para ser usado por outros scripts.
 window.SyncSystem = SyncSystem;

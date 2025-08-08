@@ -1,7 +1,5 @@
 const PedidoController = {
     async enviarPedido() {
-        console.log('Iniciando envio do pedido');
-        
         try {
             if (!Validacoes.validarFormulario()) {
                 console.log('Formulário inválido, envio cancelado.');
@@ -9,7 +7,6 @@ const PedidoController = {
             }
 
             const dados = this.coletarDados();
-            console.log('Dados coletados:', dados);
 
             for (const item of dados.itensPedido) {
                 const disponibilidade = EstoqueController.verificarDisponibilidade(item.id, item.quantidade);
@@ -33,11 +30,8 @@ const PedidoController = {
                 await this.atualizarEstoque(dados.itensPedido);
                 await TicketController.salvarTicket(dados, ticket);
                 
-                // *** CORREÇÃO ARQUITETURAL ***
-                // Agora, PedidoController chama o InterfaceController para limpar a tela.
+                // Delega a limpeza da tela para o InterfaceController
                 InterfaceController.limparCarrinho();
-                
-                Swal.fire('Enviando...', 'Seu pedido está sendo enviado para o WhatsApp.', 'info');
                 
                 const mensagem = encodeURIComponent(ticket);
                 const url = `https://wa.me/${CONFIG.WHATSAPP}?text=${mensagem}`;
@@ -76,7 +70,6 @@ const PedidoController = {
 
                 if (produtoInfo) {
                     if (produtoInfo.estoque < quantidade) {
-                        // Lança um erro que será capturado pelo enviarPedido
                         throw new Error(`Estoque insuficiente para ${produtoInfo.nome}. Disponível: ${produtoInfo.estoque}.`);
                     }
                     itens.push({
@@ -105,8 +98,8 @@ const PedidoController = {
         });
         localStorage.setItem('estoqueProdutos', JSON.stringify(window.produtos));
 
-        if (CONFIG.GITHUB && CONFIG.GITHUB.token) {
-            console.log("Tentando atualizar catálogo no GitHub...");
+        // Tenta atualizar no GitHub apenas se houver token (modo admin)
+        if (typeof GitHubAPI !== 'undefined' && CONFIG.GITHUB && CONFIG.GITHUB.token) {
             await GitHubAPI.atualizarCatalogo(window.produtos);
         }
     }
