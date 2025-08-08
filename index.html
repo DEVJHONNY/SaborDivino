@@ -4,8 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="Sabor Divino - Delícias artesanais feitas com amor. Peça online nossas trufas, mousses e empadas!">
+    <meta name="description" content="Sabor Divino - Delícias artesanais feitas com amor. Peça online!">
     <title>Pedido - Sabor Divino</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
@@ -47,20 +46,18 @@
             <div class="form-group">
                 <label for="nome">Nome:</label>
                 <input type="text" id="nome" required>
-                <span class="error" id="nomeError">Por favor, insira seu nome</span>
             </div>
             <div class="form-group">
                 <label for="telefone">WhatsApp: (opcional)</label>
                 <input type="tel" id="telefone" placeholder="DDD + Número" maxlength="11">
-                <span class="error" id="telefoneError">Formato: apenas números</span>
             </div>
             <div class="form-group">
                 <label for="endereco">Setor:</label>
                 <input type="text" id="endereco" placeholder="Ex: Norte, Sul, Centro, etc." maxlength="50">
-                <span class="error" id="enderecoError">Digite seu setor para facilitar a entrega</span>
             </div>
 
-            <div id="itensPedido"></div>
+            <div id="itensPedido">
+            </div>
 
             <button type="button" id="btnAdicionarItem">+ Adicionar Item</button>
 
@@ -80,14 +77,27 @@
                         <span class="checkmark">💳 Cartão na Entrega</span>
                     </label>
                 </div>
-                <div id="pix-container" style="display: none;">
-                    <p>Opções de PIX aparecerão aqui.</p>
+
+                <div id="pix-container" style="display: none; margin-top: 1rem;">
+                    <button type="button" id="btnMostrarQrCode" class="pix-button">Mostrar QR Code</button>
+                    <button type="button" id="btnCopiarChave" class="pix-button">Copiar Chave PIX</button>
+
+                    <div id="qr-code-wrapper" style="display: none; text-align: center; margin-top: 1rem;">
+                        <img src="" alt="QR Code PIX" id="qr-code-image" style="max-width: 200px;">
+                    </div>
+
+                    <div class="pix-info"
+                        style="margin-top: 1rem; background: #f9f9f9; padding: 1rem; border-radius: 8px;">
+                        <p><strong>Banco:</strong> <span id="pix-banco"></span></p>
+                        <p><strong>Nome:</strong> <span id="pix-nome"></span></p>
+                        <p><strong>Chave:</strong> <span id="pix-chave" style="word-break: break-all;"></span></p>
+                    </div>
                 </div>
             </div>
 
             <div class="total" id="totalPedido">Total: R$ 0,00</div>
 
-            <button type="submit" class="enviar" id="btnEnviarPedido">Enviar Pedido pelo WhatsApp</button>
+            <button type="submit" class="enviar">Enviar Pedido pelo WhatsApp</button>
         </form>
     </div>
 

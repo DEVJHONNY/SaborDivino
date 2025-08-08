@@ -7,7 +7,6 @@ const SyncSystem = {
 
         try {
             const url = `${CONFIG.CATALOGO_URL}?t=${new Date().getTime()}`;
-            // Fetch simplificado, sem as opções de 'cache' que causavam o bloqueio.
             const response = await fetch(url);
 
             if (!response.ok) {
@@ -38,11 +37,7 @@ const SyncSystem = {
     iniciarSincronizacaoAutomatica() {
         console.log("Serviço de sincronização automática iniciado.");
         this.verificarAtualizacoes();
-
-        // Sincroniza a cada 5 minutos.
         setInterval(() => this.verificarAtualizacoes(), 5 * 60 * 1000);
-
-        // Sincroniza quando o usuário volta para a aba.
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
                 this.verificarAtualizacoes();

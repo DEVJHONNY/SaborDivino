@@ -17,9 +17,7 @@ const InterfaceController = {
             </div>
             <div class="form-group">
                 <label for="produto-${numItems}">Produto:</label>
-                <select class="produto" id="produto-${numItems}">
-                    <option value="">Selecione um produto</option>
-                </select>
+                <select class="produto" id="produto-${numItems}"><option value="">Selecione um produto</option></select>
             </div>
             <div class="form-group">
                 <label for="quantidade-${numItems}">Quantidade:</label>
@@ -35,20 +33,14 @@ const InterfaceController = {
     },
     
     conectarEventos(item) {
-        const categoriaSelect = item.querySelector('.categoria');
-        const produtoSelect = item.querySelector('.produto');
-        const quantidadeInput = item.querySelector('.quantidade');
-        const btnRemover = item.querySelector('.remove-item');
-
-        categoriaSelect.addEventListener('change', () => this.atualizarProdutos(categoriaSelect));
-        produtoSelect.addEventListener('change', () => this.atualizarPrecoEstoque(produtoSelect));
-        quantidadeInput.addEventListener('input', () => this.validarQuantidade(quantidadeInput));
-        btnRemover.addEventListener('click', () => this.removerItem(btnRemover));
+        item.querySelector('.categoria').addEventListener('change', (e) => this.atualizarProdutos(e.target));
+        item.querySelector('.produto').addEventListener('change', (e) => this.atualizarPrecoEstoque(e.target));
+        item.querySelector('.quantidade').addEventListener('input', (e) => this.validarQuantidade(e.target));
+        item.querySelector('.remove-item').addEventListener('click', (e) => this.removerItem(e.target));
     },
 
     removerItem(botaoRemover) {
-        const containerItens = document.getElementById('itensPedido');
-        if (containerItens.children.length > 1) {
+        if (document.getElementById('itensPedido').children.length > 1) {
             botaoRemover.closest('.item-pedido').remove();
             this.calcularTotal();
         } else {
@@ -81,13 +73,10 @@ const InterfaceController = {
         if (selectProduto.value && window.produtos) {
             const [categoria, produtoId] = selectProduto.value.split('-');
             const produto = window.produtos[categoria]?.find(p => p.id == produtoId);
-            
             if (produto) {
                 estoqueInfo.textContent = `Disponível: ${produto.estoque}`;
                 inputQuantidade.max = produto.estoque;
-                if (parseInt(inputQuantidade.value) > produto.estoque) {
-                    inputQuantidade.value = produto.estoque;
-                }
+                if (parseInt(inputQuantidade.value) > produto.estoque) inputQuantidade.value = produto.estoque;
             }
         } else {
             estoqueInfo.textContent = '';
@@ -97,9 +86,7 @@ const InterfaceController = {
 
     validarQuantidade(inputQuantidade) {
         const max = parseInt(inputQuantidade.max);
-        if (max !== null && parseInt(inputQuantidade.value) > max) {
-            inputQuantidade.value = max;
-        }
+        if (max !== null && parseInt(inputQuantidade.value) > max) inputQuantidade.value = max;
         this.calcularTotal();
     },
 
@@ -108,13 +95,10 @@ const InterfaceController = {
         document.querySelectorAll('.item-pedido').forEach(item => {
             const selectProduto = item.querySelector('.produto');
             const quantidade = parseInt(item.querySelector('.quantidade').value) || 0;
-            
             if (selectProduto.value && window.produtos) {
                 const [categoria, produtoId] = selectProduto.value.split('-');
                 const produto = window.produtos[categoria]?.find(p => p.id == produtoId);
-                if (produto) {
-                    total += produto.preco * quantidade;
-                }
+                if (produto) total += produto.preco * quantidade;
             }
         });
         document.getElementById('totalPedido').textContent = `Total: R$ ${total.toFixed(2).replace('.', ',')}`;
@@ -123,25 +107,28 @@ const InterfaceController = {
     limparCarrinho() {
         document.getElementById('pedidoForm').reset();
         this.ocultarOpcoesPix();
-        
-        const itensContainer = document.getElementById('itensPedido');
-        itensContainer.innerHTML = '';
+        document.getElementById('itensPedido').innerHTML = '';
         this.adicionarItem();
-        
         this.calcularTotal();
-
-        Swal.fire({
-            title: 'Pedido Enviado!',
-            text: 'Você pode fazer um novo pedido agora.',
-            icon: 'success',
-            timer: 3000,
-            showConfirmButton: false
-        });
+        Swal.fire({ title: 'Pedido Enviado!', text: 'Você pode fazer um novo pedido agora.', icon: 'success', timer: 3000, showConfirmButton: false });
     },
 
     mostrarOpcoesPix() {
         const container = document.getElementById('pix-container');
-        if (container) container.style.display = 'block';
+        if (container && typeof CONFIG !== 'undefined') {
+            document.getElementById('pix-banco').textContent = CONFIG.PIX.banco;
+            document.getElementById('pix-nome').textContent = CONFIG.PIX.nome;
+            document.getElementById('pix-chave').textContent = CONFIG.PIX.chave;
+            document.getElementById('qr-code-image').src = CONFIG.PIX.qrcode_image;
+            document.getElementById('btnMostrarQrCode').onclick = () => {
+                const qrWrapper = document.getElementById('qr-code-wrapper');
+                qrWrapper.style.display = qrWrapper.style.display === 'none' ? 'block' : 'none';
+            };
+            document.getElementById('btnCopiarChave').onclick = () => {
+                navigator.clipboard.writeText(CONFIG.PIX.chave).then(() => Swal.fire('Sucesso!', 'Chave PIX copiada.', 'success'));
+            };
+            container.style.display = 'block';
+        }
     },
 
     ocultarOpcoesPix() {
