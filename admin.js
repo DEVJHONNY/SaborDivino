@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminPanel = document.getElementById('adminPanel');
     const allAdminSections = document.querySelectorAll('.secao-admin');
     const navButtons = document.querySelectorAll('.nav-btn');
-
+    
     // Elementos da Seção de Estoque
     const estoqueList = document.getElementById('estoqueList');
     const btnSalvarEstoque = document.getElementById('btnSalvarEstoque');
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Erro ao processar login.');
         }
     }
-
+    
     function mostrarSecao(secaoId) {
         allAdminSections.forEach(secao => {
             secao.style.display = secao.id === `${secaoId}Secao` ? 'block' : 'none';
@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 input.min = '0';
                 input.dataset.categoria = categoria;
                 input.dataset.id = produto.id;
-
+                
                 input.addEventListener('change', (e) => {
                     const el = e.target;
                     const cat = el.dataset.categoria;
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         estoqueList.appendChild(fragment);
     }
-
+    
     function handleSalvarEstoque() {
         // A edição já acontece em tempo real no objeto 'produtosEditaveis'
         // Apenas confirmamos e salvamos no localStorage
@@ -131,11 +131,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!listaProdutosAdmin) return;
         const categoriaSelecionada = categoriaProdutoSelect.value;
         listaProdutosAdmin.innerHTML = '';
-
+        
         produtosEditaveis[categoriaSelecionada].forEach((produto, index) => {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'produto-item';
-
+            
             itemDiv.innerHTML = `
                 <div class="form-group">
                     <label>Nome:</label>
@@ -146,12 +146,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     <input type="number" step="0.01" value="${produto.preco.toFixed(2)}" data-field="preco">
                 </div>
             `;
-
+            
             const btnRemover = document.createElement('button');
             btnRemover.textContent = 'Remover';
             btnRemover.className = 'remove-btn';
             btnRemover.addEventListener('click', () => handleRemoverProduto(categoriaSelecionada, index));
-
+            
             itemDiv.appendChild(btnRemover);
             listaProdutosAdmin.appendChild(itemDiv);
         });
@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderizarProdutosAdmin(); // Re-renderiza a lista
         }
     }
-
+    
     function handleAdicionarProduto() {
         const categoria = categoriaProdutoSelect.value;
         const novoProduto = {
@@ -179,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleSalvarProdutos() {
         const categoria = categoriaProdutoSelect.value;
         const itemsNaTela = listaProdutosAdmin.querySelectorAll('.produto-item');
-
+        
         itemsNaTela.forEach((item, index) => {
             const produtoOriginal = produtosEditaveis[categoria][index];
             if (produtoOriginal) {
@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 produtoOriginal.preco = parseFloat(item.querySelector('input[data-field="preco"]').value) || 0;
             }
         });
-
+        
         window.produtos = structuredClone(produtosEditaveis);
         localStorage.setItem('estoqueProdutos', JSON.stringify(window.produtos));
         alert('Produtos salvos localmente com sucesso!');
