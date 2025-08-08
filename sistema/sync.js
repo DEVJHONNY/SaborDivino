@@ -1,150 +1,87 @@
 const SyncSystem = {
+    /**
+     * Verifica se há uma nova versão do catálogo no servidor e atualiza os dados locais.
+     */
     async verificarAtualizacoes() {
+        // Verifica se o objeto CONFIG está disponível. Se não, interrompe para evitar erros.
+        if (typeof CONFIG === 'undefined') {
+            console.error('SyncSystem: Objeto CONFIG não está disponível. A sincronização foi abortada.');
+            return false;
+        }
+
         try {
-            // Forçar busca do GitHub ignorando cache
-            const response = await fetch(CONFIG.CATALOGO_URL + '?t=' + new Date().getTime(), {
-                cache: 'no-store',
-                headers: {
-                    'Cache-Control': 'no-cache'
-                }
-            });
+            // Adiciona um parâmetro de tempo para evitar problemas com cache do navegador.
+            const url = `${CONFIG.CATALOGO_URL}?t=${new Date().getTime()}`;
+
+            // *** CORREÇÃO CRÍTICA ***
+            // A chamada fetch foi simplificada para não enviar cabeçalhos que o servidor não permite.
+            const response = await fetch(url);
 
             if (!response.ok) {
-                throw new Error('Erro ao buscar catálogo');
+                // Lança um erro se a resposta da rede não for bem-sucedida.
+                throw new Error(`Erro de rede ao buscar catálogo: ${response.statusText}`);
             }
 
             const dadosServidor = await response.json();
-            
-            // Atualizar dados locais com dados do servidor
-            if (dadosServidor.produtos) {
-                // Atualizar produtos em memória primeiro
+            const versaoLocal = localStorage.getItem('versaoCatalogo');
+
+            // Compara a versão do servidor com a versão local para decidir se atualiza.
+            if (dadosServidor.versao && dadosServidor.versao !== versaoLocal) {
+                console.log(`Nova versão encontrada. Atualizando de ${versaoLocal} para ${dadosServidor.versao}.`);
+                
+                // Atualiza os produtos no objeto global 'window.produtos'.
                 window.produtos = dadosServidor.produtos;
                 
-                // Depois atualizar localStorage
+                // Salva os novos produtos e a nova versão no armazenamento local.
                 localStorage.setItem('estoqueProdutos', JSON.stringify(dadosServidor.produtos));
                 localStorage.setItem('versaoCatalogo', dadosServidor.versao);
                 localStorage.setItem('ultima_sincronizacao', new Date().toISOString());
                 
-                // Atualizar interface se estiver visível
-                if (typeof carregarEstoque === 'function') {
-                    carregarEstoque();
-                }
+                // Dispara um evento customizado para que outras partes da aplicação
+                // saibam que os produtos foram atualizados (ex: a interface).
+                window.dispatchEvent(new CustomEvent('produtosAtualizados'));
                 
-                // Disparar evento de atualização
-                window.dispatchEvent(new CustomEvent('produtosAtualizados', {
-                    detail: dadosServidor.produtos
-                }));
+                console.log('Sincronização e atualização concluídas com sucesso!');
+            } else {
+                console.log('Nenhuma atualização necessária. Os dados locais já estão na última versão.');
             }
-            
-            console.log('Sincronização concluída:', dadosServidor);
+
             return true;
+
         } catch (error) {
-            console.error('Erro na sincronização:', error);
+            console.error('Erro durante a sincronização:', error);
+            // Em caso de falha na rede, o sistema continuará funcionando com os dados locais.
             return false;
         }
     },
 
-    sincronizarCatalogoLocal() {
-        const versaoAtual = localStorage.getItem('versaoCatalogo');
-        
-        if (!versaoAtual || versaoAtual < CONFIG.VERSAO_CATALOGO || CONFIG.FORCAR_SINCRONIZACAO) {
-            console.log('Atualizando catálogo local...');
-            localStorage.setItem('estoqueProdutos', JSON.stringify(PRODUTOS_PADRAO));
-            localStorage.setItem('versaoCatalogo', CONFIG.VERSAO_CATALOGO);
-            return true;
-        }
-        
-        return false;
-    },
-
-    precisaAtualizar(versaoRemota) {
-        const versaoLocal = localStorage.getItem('versaoCatalogo');
-        return !versaoLocal || versaoLocal < versaoRemota || CONFIG.SYNC.FORCE_UPDATE;
-    },
-
-    async atualizarCatalogo(catalogoRemoto, forcarAtualizacao = false) {
-        try {
-            // Atualizar produtos
-            localStorage.setItem('estoqueProdutos', JSON.stringify(catalogoRemoto.produtos));
-            localStorage.setItem('versaoCatalogo', catalogoRemoto.versao);
-            
-            // Atualizar produtos em memória
-            Object.assign(produtos, catalogoRemoto.produtos);
-            
-            // Disparar evento de atualização
-            window.dispatchEvent(new CustomEvent('produtosAtualizados', {
-                detail: catalogoRemoto.produtos
-            }));
-            
-            CONFIG.SYNC.LAST_UPDATE = new Date().toISOString();
-            console.log('Catálogo atualizado com sucesso!');
-        } catch (error) {
-            console.error('Erro ao atualizar catálogo:', error);
-            throw error;
-        }
-    },
-
-    async atualizarCatalogoGitHub(produtos) {
-        try {
-            const novoConteudo = {
-                versao: new Date().toISOString().split('T')[0] + '.1',
-                produtos: produtos,
-                ultima_atualizacao: new Date().toISOString(),
-                meta: {
-                    moeda: "BRL",
-                    formato_preco: "0.00",
-                    unidade_estoque: "unidades"
-                }
-            };
-
-            // Salvar localmente primeiro
-            localStorage.setItem('estoqueProdutos', JSON.stringify(produtos));
-            localStorage.setItem('versaoCatalogo', novoConteudo.versao);
-
-            // Em produção, aqui você faria uma chamada para sua API
-            // que atualizaria o arquivo no GitHub
-            console.log('Novo catálogo para GitHub:', novoConteudo);
-
-            return true;
-        } catch (error) {
-            console.error('Erro ao atualizar catálogo no GitHub:', error);
-            return false;
-        }
-    },
-
-    // Iniciar sincronização automática mais frequente
+    /**
+     * Inicia o processo de sincronização automática em intervalos regulares e em eventos chave.
+     */
     iniciarSincronizacaoAutomatica() {
-        // Primeira sincronização imediata
+        console.log("Iniciando serviço de sincronização automática.");
+
+        // 1. Sincroniza imediatamente ao iniciar.
         this.verificarAtualizacoes();
 
-        // Sincronizar a cada 15 segundos
+        // 2. Sincroniza a cada 5 minutos (300.000 milissegundos).
         setInterval(() => {
+            console.log("Verificação periódica de sincronização...");
             this.verificarAtualizacoes();
-        }, 15 * 1000);
+        }, 5 * 60 * 1000);
 
-        // Sincronizar quando a aba voltar a ficar ativa
+        // 3. Sincroniza quando o usuário volta para a aba do site.
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
+                console.log("Aba tornou-se visível. Verificando atualizações...");
                 this.verificarAtualizacoes();
             }
         });
 
-        // Sincronizar quando houver conexão de volta
+        // 4. Sincroniza se a conexão com a internet for restabelecida.
         window.addEventListener('online', () => {
+            console.log("Conexão online. Verificando atualizações...");
             this.verificarAtualizacoes();
         });
     }
 };
-
-// Garantir que a sincronização comece assim que possível
-window.addEventListener('load', () => {
-    SyncSystem.iniciarSincronizacaoAutomatica();
-});
-
-// Forçar sincronização quando a página carregar
-document.addEventListener('DOMContentLoaded', () => {
-    SyncSystem.verificarAtualizacoes();
-});
-
-// Exportar para uso global
-window.SyncSystem = SyncSystem;
